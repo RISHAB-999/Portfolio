@@ -100,7 +100,7 @@ const MusicPlayer = () => {
             : 'w-14 justify-center rounded-[24px] bg-cyan-400/10 border-t-2 border-l-2 border-[#5ce1e6] border-b border-r border-[#5ce1e6]/30 hover:border-[#5ce1e6] hover:bg-cyan-400/20 shadow-[0_15px_35px_rgba(0,0,0,0.45),0_0_20px_rgba(92,225,230,0.4),inset_0_2px_4px_rgba(255,255,255,0.7)] hover:shadow-[0_20px_40px_rgba(0,0,0,0.55),0_0_40px_rgba(92,225,230,0.85),inset_0_0_15px_rgba(92,225,230,0.5)]'
         }`}
       >
-        {/* Invisible Cursor Force-Field Circle Highlight */}
+        {/* Invisible Cursor Circle Force-Field Highlight */}
         {isHovered && (
           <div
             className="absolute inset-0 pointer-events-none transition-opacity duration-200 z-10"
@@ -143,7 +143,7 @@ const MusicPlayer = () => {
                 className="relative z-20 w-[1.5px] h-6 bg-gradient-to-b from-transparent via-[#5ce1e6] to-transparent rounded-full shrink-0 shadow-[0_0_10px_#5ce1e6] [transform:translateZ(18px)]"
               />
 
-              {/* Waveform Container - Repelled & Torn Apart by Mouse Invisible Circle */}
+              {/* Solid Waveform Container - Bars part radially in 360° around invisible cursor circle */}
               <motion.div
                 initial={{ opacity: 0, scale: 0.8, x: -10 }}
                 animate={{ opacity: 1, scale: 1, x: 0 }}
@@ -152,71 +152,45 @@ const MusicPlayer = () => {
                 className="relative z-20 flex items-center gap-1.5 h-10 px-1 [transform:translateZ(18px)]"
               >
                 {waveformBars.map((bar, i) => {
-                  // Compute distance from cursor to this bar's center
+                  // Compute 2D distance from cursor to this bar's center
                   const barX = 72 + i * 12; // Approx X center of bar inside button
                   const barY = 28; // Center Y of button
                   const dx = barX - mousePos.x;
                   const dy = barY - mousePos.y;
                   const dist = Math.hypot(dx, dy);
-                  const forceRadius = 40;
+                  const forceRadius = 45;
 
                   const isInsideForceField = isHovered && dist < forceRadius;
                   const force = isInsideForceField ? 1 - dist / forceRadius : 0;
                   
-                  // Horizontal Repulsion (pushes left & right away from cursor)
-                  const repelX = isInsideForceField ? (dx / (dist || 1)) * force * 16 : 0;
-                  
-                  // Vertical Tearing / Splitting (top & bottom halves tear apart in middle)
-                  const tearSplitOffset = isInsideForceField ? force * 9 : 0;
+                  // 360° Radial Repulsion (pushes left/right and up/down away from cursor)
+                  const repelX = isInsideForceField ? (dx / (dist || 1)) * force * 22 : 0;
+                  const repelY = isInsideForceField ? (dy / (dist || 1)) * force * 16 : 0;
+                  const tiltAngle = isInsideForceField ? (dx / (dist || 1)) * force * 25 : 0;
 
                   return (
-                    <motion.div
+                    <motion.span
                       key={i}
-                      animate={{ x: repelX }}
-                      transition={{ type: 'spring', stiffness: 350, damping: 20 }}
-                      className="relative flex flex-col items-center justify-center shrink-0 cursor-pointer"
-                    >
-                      {/* Top Half of Wave Bar */}
-                      <motion.span
-                        animate={{
-                          height: [`${bar.min / 2}px`, `${bar.max / 2}px`, `${bar.min / 2}px`],
-                          y: -tearSplitOffset,
-                        }}
-                        transition={{
-                          height: {
-                            repeat: Infinity,
-                            duration: bar.speed,
-                            ease: 'easeInOut',
-                            delay: bar.delay,
-                          },
-                          y: { type: 'spring', stiffness: 300, damping: 20 },
-                        }}
-                        className="w-1.5 bg-[#5ce1e6] rounded-t-full shadow-[0_0_10px_rgba(92,225,230,0.95)]"
-                        style={{ height: `${(bar.min + bar.max) / 4}px` }}
-                      />
-
-                      {/* Micro Gap / Tear Joint between Top and Bottom Halves */}
-                      <div style={{ height: `${tearSplitOffset * 2.2}px` }} className="w-full transition-all duration-150" />
-
-                      {/* Bottom Half of Wave Bar */}
-                      <motion.span
-                        animate={{
-                          height: [`${bar.min / 2}px`, `${bar.max / 2}px`, `${bar.min / 2}px`],
-                          y: tearSplitOffset,
-                        }}
-                        transition={{
-                          height: {
-                            repeat: Infinity,
-                            duration: bar.speed,
-                            ease: 'easeInOut',
-                            delay: bar.delay,
-                          },
-                          y: { type: 'spring', stiffness: 300, damping: 20 },
-                        }}
-                        className="w-1.5 bg-[#5ce1e6] rounded-b-full shadow-[0_0_10px_rgba(92,225,230,0.95)]"
-                        style={{ height: `${(bar.min + bar.max) / 4}px` }}
-                      />
-                    </motion.div>
+                      animate={{
+                        x: repelX,
+                        y: repelY,
+                        rotate: tiltAngle,
+                        height: [`${bar.min}px`, `${bar.max}px`, `${bar.min}px`],
+                      }}
+                      transition={{
+                        x: { type: 'spring', stiffness: 350, damping: 20 },
+                        y: { type: 'spring', stiffness: 350, damping: 20 },
+                        rotate: { type: 'spring', stiffness: 350, damping: 20 },
+                        height: {
+                          repeat: Infinity,
+                          duration: bar.speed,
+                          ease: 'easeInOut',
+                          delay: bar.delay,
+                        },
+                      }}
+                      className="w-1.5 bg-[#5ce1e6] rounded-full shadow-[0_0_10px_rgba(92,225,230,0.95)] hover:bg-white hover:shadow-[0_0_18px_rgba(255,255,255,1),0_0_12px_rgba(92,225,230,1)] transition-colors duration-150 cursor-pointer shrink-0"
+                      style={{ height: `${(bar.min + bar.max) / 2}px` }}
+                    />
                   );
                 })}
               </motion.div>
