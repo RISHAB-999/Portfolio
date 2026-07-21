@@ -40,7 +40,8 @@ const MusicPlayer = () => {
     };
   }, []);
 
-  const toggleMusic = () => {
+  const toggleMusic = (e) => {
+    e?.stopPropagation();
     if (!audioRef.current) return;
 
     if (isPlaying) {
@@ -79,20 +80,17 @@ const MusicPlayer = () => {
 
   return (
     <div className="fixed bottom-5 right-5 z-[999] flex items-center justify-center select-none [perspective:1000px]">
-      <motion.button
+      <motion.div
         layout
         animate={{
           rotateX: isHovered ? tilt.rotateX : 0,
           rotateY: isHovered ? tilt.rotateY : 0,
           scale: isHovered ? 1.08 : 1,
         }}
-        whileTap={{ scale: 0.93 }}
         transition={{ type: 'spring', stiffness: 400, damping: 25 }}
-        onClick={toggleMusic}
         onMouseMove={handleMouseMove}
         onMouseEnter={() => setIsHovered(true)}
         onMouseLeave={handleMouseLeave}
-        title={isPlaying ? 'Pause Music' : 'Play Music'}
         style={{ transformStyle: 'preserve-3d' }}
         className={`relative flex items-center gap-3 h-14 cursor-pointer transition-all duration-300 backdrop-blur-[2px] overflow-hidden ${
           isPlaying
@@ -121,14 +119,20 @@ const MusicPlayer = () => {
           />
         )}
 
-        {/* 3D Floating Music Icon */}
-        <div className="relative z-20 shrink-0 [transform:translateZ(22px)] drop-shadow-[0_4px_12px_rgba(92,225,230,0.95)]">
+        {/* 3D Floating Music Icon Button - ONLY clicking this icon toggles music ON/OFF */}
+        <motion.button
+          whileHover={{ scale: 1.15 }}
+          whileTap={{ scale: 0.9 }}
+          onClick={toggleMusic}
+          title={isPlaying ? 'Pause Music' : 'Play Music'}
+          className="relative z-20 shrink-0 p-1 bg-transparent border-0 outline-none cursor-pointer rounded-full [transform:translateZ(22px)] drop-shadow-[0_4px_12px_rgba(92,225,230,0.95)]"
+        >
           <img
             src={isPlaying ? musicOnIcon : musicOffIcon}
             alt={isPlaying ? 'Music On' : 'Music Off'}
             className="h-8 w-8 object-contain"
           />
-        </div>
+        </motion.button>
 
         {/* 3D Floating Divider Line & Waveform */}
         <AnimatePresence>
@@ -143,88 +147,31 @@ const MusicPlayer = () => {
                 className="relative z-20 w-[1.5px] h-6 bg-gradient-to-b from-transparent via-[#5ce1e6] to-transparent rounded-full shrink-0 shadow-[0_0_10px_#5ce1e6] [transform:translateZ(18px)]"
               />
 
-              {/* Waveform Container - Individual bars split ONLY when directly under cursor */}
+              {/* Solid Waveform Container - Bars push radially around cursor, no middle seam line! */}
               <motion.div
                 initial={{ opacity: 0, scale: 0.8, x: -10 }}
                 animate={{ opacity: 1, scale: 1, x: 0 }}
                 exit={{ opacity: 0, scale: 0.8, x: -10 }}
                 transition={{ duration: 0.25, ease: 'easeOut' }}
-                className="relative z-20 flex items-center gap-1.5 h-10 px-1 [transform:translateZ(18px)]"
+                className="relative z-20 flex items-center gap-1.5 h-10 px-1 [transform:translateZ(18px)] pointer-events-none"
               >
                 {waveformBars.map((bar, i) => {
                   // Compute 2D distance from cursor to this bar's center
-                  const barX = 72 + i * 12;
-                  const barY = 28;
+                  const barX = 72 + i * 12; // Approx X center of bar inside button
+                  const barY = 28; // Center Y of button
                   const dx = barX - mousePos.x;
                   const dy = barY - mousePos.y;
                   const dist = Math.hypot(dx, dy);
-                  const forceRadius = 38;
+                  const forceRadius = 45;
 
                   const isInsideForceField = isHovered && dist < forceRadius;
                   const force = isInsideForceField ? 1 - dist / forceRadius : 0;
                   
-                  // Radial Repulsion (pushes away from cursor)
-                  const repelX = isInsideForceField ? (dx / (dist || 1)) * force * 18 : 0;
-                  const repelY = isInsideForceField ? (dy / (dist || 1)) * force * 14 : 0;
-                  const tiltAngle = isInsideForceField ? (dx / (dist || 1)) * force * 20 : 0;
+                  // 360° Radial Repulsion (pushes left/right and up/down away from cursor)
+                  const repelX = isInsideForceField ? (dx / (dist || 1)) * force * 22 : 0;
+                  const repelY = isInsideForceField ? (dy / (dist || 1)) * force * 16 : 0;
+                  const tiltAngle = isInsideForceField ? (dx / (dist || 1)) * force * 25 : 0;
 
-                  // ONLY split when cursor is right over this specific bar (force > 0.35)
-                  const isSplitting = isInsideForceField && force > 0.35;
-                  const splitGap = isSplitting ? (force - 0.35) * 16 : 0;
-
-                  if (isSplitting) {
-                    return (
-                      <motion.div
-                        key={i}
-                        animate={{ x: repelX, y: repelY, rotate: tiltAngle }}
-                        transition={{ type: 'spring', stiffness: 350, damping: 20 }}
-                        className="relative flex flex-col items-center justify-center shrink-0 cursor-pointer"
-                      >
-                        {/* Top Half of Wave Bar */}
-                        <motion.span
-                          animate={{
-                            height: [`${bar.min / 2}px`, `${bar.max / 2}px`, `${bar.min / 2}px`],
-                            y: -splitGap,
-                          }}
-                          transition={{
-                            height: {
-                              repeat: Infinity,
-                              duration: bar.speed,
-                              ease: 'easeInOut',
-                              delay: bar.delay,
-                            },
-                            y: { type: 'spring', stiffness: 300, damping: 20 },
-                          }}
-                          className="w-1.5 bg-white rounded-t-full shadow-[0_0_12px_rgba(255,255,255,1),0_0_8px_rgba(92,225,230,1)]"
-                          style={{ height: `${(bar.min + bar.max) / 4}px` }}
-                        />
-
-                        {/* Open Gap under Cursor Circle */}
-                        <div style={{ height: `${splitGap * 1.8}px` }} className="w-full transition-all duration-150" />
-
-                        {/* Bottom Half of Wave Bar */}
-                        <motion.span
-                          animate={{
-                            height: [`${bar.min / 2}px`, `${bar.max / 2}px`, `${bar.min / 2}px`],
-                            y: splitGap,
-                          }}
-                          transition={{
-                            height: {
-                              repeat: Infinity,
-                              duration: bar.speed,
-                              ease: 'easeInOut',
-                              delay: bar.delay,
-                            },
-                            y: { type: 'spring', stiffness: 300, damping: 20 },
-                          }}
-                          className="w-1.5 bg-white rounded-b-full shadow-[0_0_12px_rgba(255,255,255,1),0_0_8px_rgba(92,225,230,1)]"
-                          style={{ height: `${(bar.min + bar.max) / 4}px` }}
-                        />
-                      </motion.div>
-                    );
-                  }
-
-                  // Normal Solid Wave Bar (NO middle cut line!)
                   return (
                     <motion.span
                       key={i}
@@ -245,7 +192,7 @@ const MusicPlayer = () => {
                           delay: bar.delay,
                         },
                       }}
-                      className="w-1.5 bg-[#5ce1e6] rounded-full shadow-[0_0_10px_rgba(92,225,230,0.95)] transition-colors duration-150 cursor-pointer shrink-0"
+                      className="w-1.5 bg-[#5ce1e6] rounded-full shadow-[0_0_10px_rgba(92,225,230,0.95)] shrink-0"
                       style={{ height: `${(bar.min + bar.max) / 2}px` }}
                     />
                   );
@@ -254,7 +201,7 @@ const MusicPlayer = () => {
             </>
           )}
         </AnimatePresence>
-      </motion.button>
+      </motion.div>
     </div>
   );
 };
