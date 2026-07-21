@@ -44,14 +44,11 @@ const MusicPlayer = () => {
       audioRef.current.pause();
       setIsPlaying(false);
     } else {
-      audioRef.current
-        .play()
-        .then(() => {
-          setIsPlaying(true);
-        })
-        .catch((err) => {
-          console.error('Audio playback error:', err);
-        });
+      setIsPlaying(true);
+      audioRef.current.play().catch((err) => {
+        console.error('Audio playback error:', err);
+        setIsPlaying(false);
+      });
     }
   };
 
@@ -59,8 +56,8 @@ const MusicPlayer = () => {
     <div className="fixed bottom-5 right-5 z-[999] flex items-center justify-center select-none">
       <motion.button
         layout
-        whileHover={{ scale: 1.06 }}
-        whileTap={{ scale: 0.94 }}
+        whileHover={{ scale: 1.05 }}
+        whileTap={{ scale: 0.95 }}
         onClick={toggleMusic}
         title={isPlaying ? 'Pause Music' : 'Play Music'}
         className={`relative flex items-center gap-3 h-14 cursor-pointer transition-all duration-300 backdrop-blur-[4px] backdrop-saturate-200 overflow-hidden ${
@@ -69,7 +66,7 @@ const MusicPlayer = () => {
             : 'w-14 justify-center rounded-[24px] bg-gradient-to-br from-white/30 via-cyan-400/10 to-transparent border-t border-l border-white/80 border-b border-r border-white/20 hover:border-cyan-300/80 hover:bg-gradient-to-br hover:from-[#5ce1e6]/25 hover:via-sky-400/10 hover:to-transparent shadow-[0_10px_25px_rgba(0,0,0,0.35),0_0_15px_rgba(92,225,230,0.25),inset_0_2px_4px_rgba(255,255,255,0.65)]'
         }`}
       >
-        {/* Liquid background wave effect */}
+        {/* Liquid background wave shimmer */}
         <motion.div
           animate={{
             borderRadius: ['40% 60% 70% 30%/40% 50% 60% 50%', '60% 40% 30% 70%/50% 60% 40% 60%', '40% 60% 70% 30%/40% 50% 60% 50%'],
@@ -83,18 +80,18 @@ const MusicPlayer = () => {
         <img
           src={isPlaying ? musicOnIcon : musicOffIcon}
           alt={isPlaying ? 'Music On' : 'Music Off'}
-          className="relative z-20 h-9 w-9 object-contain drop-shadow-[0_2px_8px_rgba(92,225,230,0.8)]"
+          className="relative z-20 h-9 w-9 shrink-0 object-contain drop-shadow-[0_2px_8px_rgba(92,225,230,0.8)]"
         />
 
-        {/* Exact iOS / Siri / Voice Memo Style Animated Waveform */}
+        {/* iOS Voice Memo Style Animated Waveform Capsule */}
         <AnimatePresence>
           {isPlaying && (
             <motion.div
-              initial={{ opacity: 0, width: 0 }}
-              animate={{ opacity: 1, width: 'auto' }}
-              exit={{ opacity: 0, width: 0 }}
-              transition={{ duration: 0.3 }}
-              className="relative z-20 flex items-center gap-1.5 h-10 px-1 overflow-hidden"
+              initial={{ opacity: 0, scale: 0.8, x: -10 }}
+              animate={{ opacity: 1, scale: 1, x: 0 }}
+              exit={{ opacity: 0, scale: 0.8, x: -10 }}
+              transition={{ duration: 0.25, ease: 'easeOut' }}
+              className="relative z-20 flex items-center gap-1.5 h-10 px-1"
             >
               {waveformBars.map((bar, i) => (
                 <motion.span
