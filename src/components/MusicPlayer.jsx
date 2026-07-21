@@ -22,6 +22,7 @@ const waveformBars = [
 const MusicPlayer = () => {
   const [isPlaying, setIsPlaying] = useState(false);
   const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
+  const [tilt, setTilt] = useState({ rotateX: 0, rotateY: 0 });
   const [isHovered, setIsHovered] = useState(false);
   const audioRef = useRef(null);
 
@@ -56,27 +57,46 @@ const MusicPlayer = () => {
 
   const handleMouseMove = (e) => {
     const rect = e.currentTarget.getBoundingClientRect();
-    setMousePos({
-      x: e.clientX - rect.left,
-      y: e.clientY - rect.top,
-    });
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+    
+    const centerX = rect.width / 2;
+    const centerY = rect.height / 2;
+    
+    // Interactive 3D Parallax Tilt Angles
+    const rotateX = ((y - centerY) / centerY) * -18;
+    const rotateY = ((x - centerX) / centerX) * 18;
+
+    setMousePos({ x, y });
+    setTilt({ rotateX, rotateY });
+  };
+
+  const handleMouseLeave = () => {
+    setIsHovered(false);
+    setTilt({ rotateX: 0, rotateY: 0 });
   };
 
   return (
-    <div className="fixed bottom-5 right-5 z-[999] flex items-center justify-center select-none">
+    <div className="fixed bottom-5 right-5 z-[999] flex items-center justify-center select-none [perspective:1000px]">
       <motion.button
         layout
-        whileHover={{ scale: 1.06 }}
-        whileTap={{ scale: 0.94 }}
+        animate={{
+          rotateX: isHovered ? tilt.rotateX : 0,
+          rotateY: isHovered ? tilt.rotateY : 0,
+          scale: isHovered ? 1.08 : 1,
+        }}
+        whileTap={{ scale: 0.93 }}
+        transition={{ type: 'spring', stiffness: 400, damping: 25 }}
         onClick={toggleMusic}
         onMouseMove={handleMouseMove}
         onMouseEnter={() => setIsHovered(true)}
-        onMouseLeave={() => setIsHovered(false)}
+        onMouseLeave={handleMouseLeave}
         title={isPlaying ? 'Pause Music' : 'Play Music'}
+        style={{ transformStyle: 'preserve-3d' }}
         className={`relative flex items-center gap-3 h-14 cursor-pointer transition-all duration-300 backdrop-blur-[2px] overflow-hidden ${
           isPlaying
-            ? 'px-4 rounded-full bg-cyan-400/10 border-t border-l border-[#5ce1e6]/80 border-b border-r border-[#5ce1e6]/30 shadow-[0_8px_25px_rgba(0,0,0,0.3),0_0_18px_rgba(92,225,230,0.4),inset_0_1.5px_3px_rgba(255,255,255,0.65)] hover:shadow-[0_0_35px_rgba(92,225,230,0.75),inset_0_0_15px_rgba(92,225,230,0.4)] hover:border-[#5ce1e6]'
-            : 'w-14 justify-center rounded-[24px] bg-cyan-400/10 border-t border-l border-[#5ce1e6]/80 border-b border-r border-[#5ce1e6]/30 hover:border-[#5ce1e6] hover:bg-cyan-400/20 shadow-[0_8px_25px_rgba(0,0,0,0.3),0_0_18px_rgba(92,225,230,0.35),inset_0_1.5px_3px_rgba(255,255,255,0.65)] hover:shadow-[0_0_35px_rgba(92,225,230,0.75),inset_0_0_15px_rgba(92,225,230,0.4)]'
+            ? 'px-4 rounded-full bg-cyan-400/10 border-t-2 border-l-2 border-[#5ce1e6] border-b border-r border-[#5ce1e6]/30 shadow-[0_15px_35px_rgba(0,0,0,0.45),0_0_20px_rgba(92,225,230,0.45),inset_0_2px_4px_rgba(255,255,255,0.7)] hover:shadow-[0_20px_40px_rgba(0,0,0,0.55),0_0_40px_rgba(92,225,230,0.85),inset_0_0_15px_rgba(92,225,230,0.5)]'
+            : 'w-14 justify-center rounded-[24px] bg-cyan-400/10 border-t-2 border-l-2 border-[#5ce1e6] border-b border-r border-[#5ce1e6]/30 hover:border-[#5ce1e6] hover:bg-cyan-400/20 shadow-[0_15px_35px_rgba(0,0,0,0.45),0_0_20px_rgba(92,225,230,0.4),inset_0_2px_4px_rgba(255,255,255,0.7)] hover:shadow-[0_20px_40px_rgba(0,0,0,0.55),0_0_40px_rgba(92,225,230,0.85),inset_0_0_15px_rgba(92,225,230,0.5)]'
         }`}
       >
         {/* Interactive Mouse Cursor Tracking Radial Spotlight Glow Effect */}
@@ -84,7 +104,7 @@ const MusicPlayer = () => {
           <div
             className="absolute inset-0 pointer-events-none transition-opacity duration-200 z-10"
             style={{
-              background: `radial-gradient(90px circle at ${mousePos.x}px ${mousePos.y}px, rgba(92, 225, 230, 0.5), transparent 70%)`,
+              background: `radial-gradient(100px circle at ${mousePos.x}px ${mousePos.y}px, rgba(92, 225, 230, 0.55), transparent 70%)`,
             }}
           />
         )}
@@ -96,44 +116,46 @@ const MusicPlayer = () => {
               x: ['-100%', '100%'],
             }}
             transition={{ repeat: Infinity, duration: 3.5, ease: 'easeInOut' }}
-            className="absolute inset-0 bg-gradient-to-r from-transparent via-[#5ce1e6]/25 to-transparent pointer-events-none blur-[1px] z-0"
+            className="absolute inset-0 bg-gradient-to-r from-transparent via-[#5ce1e6]/30 to-transparent pointer-events-none blur-[1px] z-0"
           />
         )}
 
-        {/* Music icon */}
-        <img
-          src={isPlaying ? musicOnIcon : musicOffIcon}
-          alt={isPlaying ? 'Music On' : 'Music Off'}
-          className="relative z-20 h-8 w-8 shrink-0 object-contain drop-shadow-[0_0_10px_rgba(92,225,230,0.95)]"
-        />
+        {/* 3D Floating Music Icon */}
+        <div className="relative z-20 shrink-0 [transform:translateZ(22px)] drop-shadow-[0_4px_12px_rgba(92,225,230,0.95)]">
+          <img
+            src={isPlaying ? musicOnIcon : musicOffIcon}
+            alt={isPlaying ? 'Music On' : 'Music Off'}
+            className="h-8 w-8 object-contain"
+          />
+        </div>
 
-        {/* Divider Line & Waveform */}
+        {/* 3D Floating Divider Line & Waveform */}
         <AnimatePresence>
           {isPlaying && (
             <>
-              {/* Divider Line between Icon and Wave */}
+              {/* Divider Line */}
               <motion.div
                 initial={{ opacity: 0, scaleY: 0 }}
                 animate={{ opacity: 1, scaleY: 1 }}
                 exit={{ opacity: 0, scaleY: 0 }}
                 transition={{ duration: 0.2 }}
-                className="relative z-20 w-[1.5px] h-6 bg-gradient-to-b from-transparent via-[#5ce1e6]/90 to-transparent rounded-full shrink-0 shadow-[0_0_8px_#5ce1e6]"
+                className="relative z-20 w-[1.5px] h-6 bg-gradient-to-b from-transparent via-[#5ce1e6] to-transparent rounded-full shrink-0 shadow-[0_0_10px_#5ce1e6] [transform:translateZ(18px)]"
               />
 
-              {/* iOS Voice Memo Style Animated Waveform Capsule */}
+              {/* iOS Voice Memo Style Animated Waveform Capsule floating in 3D */}
               <motion.div
                 initial={{ opacity: 0, scale: 0.8, x: -10 }}
                 animate={{ opacity: 1, scale: 1, x: 0 }}
                 exit={{ opacity: 0, scale: 0.8, x: -10 }}
                 transition={{ duration: 0.25, ease: 'easeOut' }}
-                className="relative z-20 flex items-center gap-1.5 h-10 px-1"
+                className="relative z-20 flex items-center gap-1.5 h-10 px-1 [transform:translateZ(18px)]"
               >
                 {waveformBars.map((bar, i) => (
                   <motion.span
                     key={i}
                     animate={{ height: [`${bar.min}px`, `${bar.max}px`, `${bar.min}px`] }}
                     transition={{ repeat: Infinity, duration: bar.speed, ease: 'easeInOut', delay: bar.delay }}
-                    className="w-1.5 bg-[#5ce1e6] rounded-full shadow-[0_0_10px_rgba(92,225,230,0.95)]"
+                    className="w-1.5 bg-[#5ce1e6] rounded-full shadow-[0_0_12px_rgba(92,225,230,0.95)]"
                     style={{ height: `${(bar.min + bar.max) / 2}px` }}
                   />
                 ))}
