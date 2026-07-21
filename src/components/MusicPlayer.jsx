@@ -48,10 +48,10 @@ const MusicPlayer = () => {
         whileTap={{ scale: 0.92 }}
         onClick={toggleMusic}
         title={isPlaying ? 'Pause Music' : 'Play Music'}
-        className={`relative flex items-center justify-center h-14 w-14 rounded-2xl cursor-pointer transition-all duration-300 backdrop-blur-2xl backdrop-saturate-200 overflow-hidden ${
+        className={`relative flex items-center justify-center h-14 w-14 rounded-2xl cursor-pointer transition-all duration-300 backdrop-blur-[3px] backdrop-saturate-150 overflow-hidden ${
           isPlaying
-            ? 'bg-gradient-to-br from-[#5ce1e6]/30 via-white/10 to-black/40 border-t border-l border-[#5ce1e6]/90 border-b border-r border-[#5ce1e6]/30 shadow-[0_12px_32px_0_rgba(0,0,0,0.6),0_0_25px_rgba(92,225,230,0.5),inset_0_2px_4px_0_rgba(255,255,255,0.6),inset_0_-3px_6px_0_rgba(0,0,0,0.4)]'
-            : 'bg-gradient-to-br from-white/20 via-white/[0.05] to-black/50 border-t border-l border-white/60 border-b border-r border-white/10 hover:border-[#5ce1e6]/80 hover:bg-gradient-to-br hover:from-[#5ce1e6]/25 hover:via-white/10 hover:to-black/40 shadow-[0_12px_32px_0_rgba(0,0,0,0.6),0_0_15px_rgba(92,225,230,0.25),inset_0_2px_4px_0_rgba(255,255,255,0.5),inset_0_-3px_6px_0_rgba(0,0,0,0.5)]'
+            ? 'bg-gradient-to-br from-[#5ce1e6]/25 via-white/10 to-transparent border-t border-l border-[#5ce1e6]/90 border-b border-r border-[#5ce1e6]/30 shadow-[0_8px_24px_0_rgba(0,0,0,0.4),0_0_20px_rgba(92,225,230,0.4),inset_0_1.5px_2px_0_rgba(255,255,255,0.7)]'
+            : 'bg-gradient-to-br from-white/20 via-white/[0.08] to-transparent border-t border-l border-white/70 border-b border-r border-white/20 hover:border-[#5ce1e6]/80 hover:bg-gradient-to-br hover:from-[#5ce1e6]/20 hover:via-white/10 hover:to-transparent shadow-[0_8px_24px_0_rgba(0,0,0,0.4),0_0_15px_rgba(92,225,230,0.2),inset_0_1.5px_2px_0_rgba(255,255,255,0.6)]'
         }`}
       >
         {/* Animated Soundwaves inside the transparent button */}
