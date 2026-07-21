@@ -37,8 +37,7 @@ const MusicPlayer = () => {
     };
   }, []);
 
-  const toggleMusic = (e) => {
-    e.stopPropagation();
+  const toggleMusic = () => {
     if (!audioRef.current) return;
 
     if (isPlaying) {
@@ -55,39 +54,35 @@ const MusicPlayer = () => {
 
   return (
     <div className="fixed bottom-5 right-5 z-[999] flex items-center justify-center select-none">
-      <motion.div
+      <motion.button
         layout
-        className={`relative flex items-center gap-3 h-14 transition-all duration-300 backdrop-blur-xl backdrop-saturate-150 overflow-hidden ${
+        whileHover={{ scale: 1.05 }}
+        whileTap={{ scale: 0.95 }}
+        onClick={toggleMusic}
+        title={isPlaying ? 'Pause Music' : 'Play Music'}
+        className={`relative flex items-center gap-3 h-14 cursor-pointer transition-all duration-300 backdrop-blur-[2px] overflow-hidden ${
           isPlaying
-            ? 'px-4 rounded-full bg-gradient-to-br from-[#5ce1e6]/35 via-cyan-400/20 to-sky-500/10 border-t border-l border-cyan-200/90 border-b border-r border-[#5ce1e6]/40 shadow-[0_8px_32px_0_rgba(0,0,0,0.4),0_0_25px_rgba(92,225,230,0.55),inset_0_1.5px_3px_0_rgba(255,255,255,0.7)]'
-            : 'w-14 justify-center rounded-[24px] bg-gradient-to-br from-[#5ce1e6]/25 via-cyan-400/15 to-transparent border-t border-l border-cyan-200/80 border-b border-r border-[#5ce1e6]/30 hover:border-[#5ce1e6] hover:bg-gradient-to-br hover:from-[#5ce1e6]/35 hover:via-cyan-400/20 hover:to-sky-500/10 shadow-[0_8px_32px_0_rgba(0,0,0,0.4),0_0_18px_rgba(92,225,230,0.35),inset_0_1.5px_3px_0_rgba(255,255,255,0.65)]'
+            ? 'px-4 rounded-full bg-cyan-400/10 border-t border-l border-[#5ce1e6]/80 border-b border-r border-[#5ce1e6]/30 shadow-[0_8px_25px_rgba(0,0,0,0.3),0_0_15px_rgba(92,225,230,0.3),inset_0_1.5px_3px_rgba(255,255,255,0.65)]'
+            : 'w-14 justify-center rounded-[24px] bg-cyan-400/10 border-t border-l border-[#5ce1e6]/80 border-b border-r border-[#5ce1e6]/30 hover:border-[#5ce1e6] hover:bg-cyan-400/20 shadow-[0_8px_25px_rgba(0,0,0,0.3),0_0_15px_rgba(92,225,230,0.3),inset_0_1.5px_3px_rgba(255,255,255,0.65)]'
         }`}
       >
-        {/* Cyan Liquid Light Shimmer Flowing inside Liquid Glass material */}
+        {/* Cyan Liquid Light Shimmer Flowing inside Crystal Glass */}
         {isPlaying && (
           <motion.div
             animate={{
               x: ['-100%', '100%'],
             }}
             transition={{ repeat: Infinity, duration: 3.5, ease: 'easeInOut' }}
-            className="absolute inset-0 bg-gradient-to-r from-transparent via-[#5ce1e6]/40 to-transparent pointer-events-none blur-[2px]"
+            className="absolute inset-0 bg-gradient-to-r from-transparent via-[#5ce1e6]/25 to-transparent pointer-events-none blur-[1px]"
           />
         )}
 
-        {/* Music Icon Button - Clicking ONLY this icon toggles open/close */}
-        <motion.button
-          whileHover={{ scale: 1.15 }}
-          whileTap={{ scale: 0.9 }}
-          onClick={toggleMusic}
-          title={isPlaying ? 'Pause Music' : 'Play Music'}
-          className="relative z-20 flex items-center justify-center p-1 bg-transparent border-0 outline-none cursor-pointer rounded-full"
-        >
-          <img
-            src={isPlaying ? musicOnIcon : musicOffIcon}
-            alt={isPlaying ? 'Music On' : 'Music Off'}
-            className="h-8 w-8 shrink-0 object-contain drop-shadow-[0_0_10px_rgba(92,225,230,0.9)]"
-          />
-        </motion.button>
+        {/* Music icon */}
+        <img
+          src={isPlaying ? musicOnIcon : musicOffIcon}
+          alt={isPlaying ? 'Music On' : 'Music Off'}
+          className="relative z-20 h-8 w-8 shrink-0 object-contain drop-shadow-[0_0_8px_rgba(92,225,230,0.9)]"
+        />
 
         {/* Divider Line & Waveform */}
         <AnimatePresence>
@@ -123,7 +118,7 @@ const MusicPlayer = () => {
             </>
           )}
         </AnimatePresence>
-      </motion.div>
+      </motion.button>
     </div>
   );
 };
