@@ -12,7 +12,7 @@
 //     showOnProjects   -> appears as a media card on the Projects page
 //     featured         -> appears in the home-page post-footer highlights
 
-import ubcroomfinder from '../assets/ubc_room_finder.png';
+import moonlitApp from '../assets/moonlit_app.jpg';
 import therapiqueApp from '../assets/therapique.png';
 
 export const projects = [
@@ -24,7 +24,7 @@ export const projects = [
     technologies: 'Flutter, Dart, Firebase, Android Studio',
     description:
       'Developed a fully functional e-commerce mobile app using Flutter and Dart from concept to deployment. Features include product listings, shopping cart, secure checkout, and user authentication with responsive UI/UX design across multiple devices.',
-    media: { type: 'image', src: ubcroomfinder },
+    media: { type: 'image', src: moonlitApp },
     showOnExperience: true,
     showOnProjects: false,
     featured: true,
