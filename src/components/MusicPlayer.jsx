@@ -142,29 +142,36 @@ const MusicPlayer = () => {
                 className="relative z-20 w-[1.5px] h-6 bg-gradient-to-b from-transparent via-[#5ce1e6] to-transparent rounded-full shrink-0 shadow-[0_0_10px_#5ce1e6] [transform:translateZ(18px)]"
               />
 
-              {/* iOS Voice Memo Style Animated Waveform Capsule floating in 3D */}
+              {/* iOS Voice Memo Style Animated Waveform Capsule - Bars separate on hover! */}
               <motion.div
                 initial={{ opacity: 0, scale: 0.8, x: -10 }}
-                animate={{ opacity: 1, scale: 1, x: 0 }}
+                animate={{
+                  opacity: 1,
+                  scale: 1,
+                  x: 0,
+                  gap: isHovered ? '12px' : '6px',
+                }}
                 exit={{ opacity: 0, scale: 0.8, x: -10 }}
-                transition={{ duration: 0.25, ease: 'easeOut' }}
-                className="relative z-20 flex items-center gap-1.5 h-10 px-1 [transform:translateZ(18px)]"
+                transition={{ duration: 0.3, ease: 'easeOut' }}
+                className="relative z-20 flex items-center h-10 px-1 [transform:translateZ(18px)]"
               >
                 {waveformBars.map((bar, i) => {
-                  const currentMin = isHovered ? bar.min * 1.3 : bar.min;
-                  const currentMax = isHovered ? bar.max * 1.35 : bar.max;
+                  const currentMin = isHovered ? bar.min * 1.25 : bar.min;
+                  const currentMax = isHovered ? bar.max * 1.3 : bar.max;
                   return (
                     <motion.span
                       key={i}
-                      whileHover={{ scaleY: 1.4, scaleX: 1.3, backgroundColor: '#ffffff' }}
+                      whileHover={{ scaleY: 1.4, scaleX: 1.4, backgroundColor: '#ffffff' }}
                       animate={{ height: [`${currentMin}px`, `${currentMax}px`, `${currentMin}px`] }}
                       transition={{
-                        repeat: Infinity,
-                        duration: isHovered ? bar.speed * 0.75 : bar.speed,
-                        ease: 'easeInOut',
-                        delay: bar.delay,
+                        height: {
+                          repeat: Infinity,
+                          duration: isHovered ? bar.speed * 0.75 : bar.speed,
+                          ease: 'easeInOut',
+                          delay: bar.delay,
+                        },
                       }}
-                      className="w-1.5 bg-[#5ce1e6] rounded-full shadow-[0_0_12px_rgba(92,225,230,0.95)] hover:shadow-[0_0_18px_rgba(255,255,255,1),0_0_10px_rgba(92,225,230,1)] transition-colors duration-150 cursor-pointer"
+                      className="w-1.5 bg-[#5ce1e6] rounded-full shadow-[0_0_12px_rgba(92,225,230,0.95)] hover:shadow-[0_0_18px_rgba(255,255,255,1),0_0_10px_rgba(92,225,230,1)] transition-all duration-200 cursor-pointer shrink-0"
                       style={{ height: `${(currentMin + currentMax) / 2}px` }}
                     />
                   );
