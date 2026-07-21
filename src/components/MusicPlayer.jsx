@@ -54,9 +54,6 @@ const MusicPlayer = () => {
             : 'bg-gradient-to-br from-white/30 via-cyan-400/10 to-transparent border-t border-l border-white/80 border-b border-r border-white/20 hover:border-cyan-300/80 hover:bg-gradient-to-br hover:from-[#5ce1e6]/25 hover:via-sky-400/10 hover:to-transparent shadow-[0_10px_25px_rgba(0,0,0,0.35),0_0_15px_rgba(92,225,230,0.25),inset_0_2px_4px_rgba(255,255,255,0.65),inset_0_-2px_6px_rgba(0,0,0,0.2)]'
         }`}
       >
-        {/* Water Drop Highlight (Glistening Specular Lens Reflection) */}
-        <div className="absolute top-1.5 left-2.5 w-7 h-2.5 rounded-full bg-gradient-to-b from-white/70 to-transparent pointer-events-none blur-[0.5px]" />
-
         {/* Liquid Water Wave shimmer inside the glass droplet */}
         <motion.div
           animate={{
