@@ -48,7 +48,11 @@ const MusicPlayer = () => {
         whileTap={{ scale: 0.92 }}
         onClick={toggleMusic}
         title={isPlaying ? 'Pause Music' : 'Play Music'}
-        className="relative flex items-center justify-center h-14 w-14 bg-transparent border-0 outline-none p-0 cursor-pointer"
+        className={`relative flex items-center justify-center h-14 w-14 rounded-2xl border backdrop-blur-md cursor-pointer transition-all duration-300 ${
+          isPlaying
+            ? 'border-[#5ce1e6]/70 bg-[#5ce1e6]/20 shadow-[0_0_20px_rgba(92,225,230,0.45),inset_0_0_12px_rgba(92,225,230,0.3)]'
+            : 'border-[#5ce1e6]/35 bg-[#0b0f1f]/50 hover:bg-[#5ce1e6]/15 hover:border-[#5ce1e6]/60 shadow-[0_0_12px_rgba(92,225,230,0.2)]'
+        }`}
       >
         {/* Animated Soundwaves inside the transparent button */}
         <AnimatePresence>
