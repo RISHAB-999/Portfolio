@@ -21,6 +21,8 @@ const waveformBars = [
 
 const MusicPlayer = () => {
   const [isPlaying, setIsPlaying] = useState(false);
+  const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
+  const [isHovered, setIsHovered] = useState(false);
   const audioRef = useRef(null);
 
   useEffect(() => {
@@ -52,20 +54,41 @@ const MusicPlayer = () => {
     }
   };
 
+  const handleMouseMove = (e) => {
+    const rect = e.currentTarget.getBoundingClientRect();
+    setMousePos({
+      x: e.clientX - rect.left,
+      y: e.clientY - rect.top,
+    });
+  };
+
   return (
     <div className="fixed bottom-5 right-5 z-[999] flex items-center justify-center select-none">
       <motion.button
         layout
-        whileHover={{ scale: 1.05 }}
-        whileTap={{ scale: 0.95 }}
+        whileHover={{ scale: 1.06 }}
+        whileTap={{ scale: 0.94 }}
         onClick={toggleMusic}
+        onMouseMove={handleMouseMove}
+        onMouseEnter={() => setIsHovered(true)}
+        onMouseLeave={() => setIsHovered(false)}
         title={isPlaying ? 'Pause Music' : 'Play Music'}
         className={`relative flex items-center gap-3 h-14 cursor-pointer transition-all duration-300 backdrop-blur-[2px] overflow-hidden ${
           isPlaying
-            ? 'px-4 rounded-full bg-cyan-400/10 border-t border-l border-[#5ce1e6]/80 border-b border-r border-[#5ce1e6]/30 shadow-[0_8px_25px_rgba(0,0,0,0.3),0_0_15px_rgba(92,225,230,0.3),inset_0_1.5px_3px_rgba(255,255,255,0.65)]'
-            : 'w-14 justify-center rounded-[24px] bg-cyan-400/10 border-t border-l border-[#5ce1e6]/80 border-b border-r border-[#5ce1e6]/30 hover:border-[#5ce1e6] hover:bg-cyan-400/20 shadow-[0_8px_25px_rgba(0,0,0,0.3),0_0_15px_rgba(92,225,230,0.3),inset_0_1.5px_3px_rgba(255,255,255,0.65)]'
+            ? 'px-4 rounded-full bg-cyan-400/10 border-t border-l border-[#5ce1e6]/80 border-b border-r border-[#5ce1e6]/30 shadow-[0_8px_25px_rgba(0,0,0,0.3),0_0_18px_rgba(92,225,230,0.4),inset_0_1.5px_3px_rgba(255,255,255,0.65)] hover:shadow-[0_0_35px_rgba(92,225,230,0.75),inset_0_0_15px_rgba(92,225,230,0.4)] hover:border-[#5ce1e6]'
+            : 'w-14 justify-center rounded-[24px] bg-cyan-400/10 border-t border-l border-[#5ce1e6]/80 border-b border-r border-[#5ce1e6]/30 hover:border-[#5ce1e6] hover:bg-cyan-400/20 shadow-[0_8px_25px_rgba(0,0,0,0.3),0_0_18px_rgba(92,225,230,0.35),inset_0_1.5px_3px_rgba(255,255,255,0.65)] hover:shadow-[0_0_35px_rgba(92,225,230,0.75),inset_0_0_15px_rgba(92,225,230,0.4)]'
         }`}
       >
+        {/* Interactive Mouse Cursor Tracking Radial Spotlight Glow Effect */}
+        {isHovered && (
+          <div
+            className="absolute inset-0 pointer-events-none transition-opacity duration-200 z-10"
+            style={{
+              background: `radial-gradient(90px circle at ${mousePos.x}px ${mousePos.y}px, rgba(92, 225, 230, 0.5), transparent 70%)`,
+            }}
+          />
+        )}
+
         {/* Cyan Liquid Light Shimmer Flowing inside Crystal Glass */}
         {isPlaying && (
           <motion.div
@@ -73,7 +96,7 @@ const MusicPlayer = () => {
               x: ['-100%', '100%'],
             }}
             transition={{ repeat: Infinity, duration: 3.5, ease: 'easeInOut' }}
-            className="absolute inset-0 bg-gradient-to-r from-transparent via-[#5ce1e6]/25 to-transparent pointer-events-none blur-[1px]"
+            className="absolute inset-0 bg-gradient-to-r from-transparent via-[#5ce1e6]/25 to-transparent pointer-events-none blur-[1px] z-0"
           />
         )}
 
@@ -81,7 +104,7 @@ const MusicPlayer = () => {
         <img
           src={isPlaying ? musicOnIcon : musicOffIcon}
           alt={isPlaying ? 'Music On' : 'Music Off'}
-          className="relative z-20 h-8 w-8 shrink-0 object-contain drop-shadow-[0_0_8px_rgba(92,225,230,0.9)]"
+          className="relative z-20 h-8 w-8 shrink-0 object-contain drop-shadow-[0_0_10px_rgba(92,225,230,0.95)]"
         />
 
         {/* Divider Line & Waveform */}
