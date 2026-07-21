@@ -4,7 +4,7 @@ import styles from './style';
 import './index.css';
 
 import Home from './pages/Home';
-import { Navbar, Footer, PostFooterHome, CaveStalactites } from './components';
+import { Navbar, Footer, PostFooterHome, CaveStalactites, MusicPlayer } from './components';
 import { kirbyfloating, rocks, grass, caveBG } from './assets';
 import { pageConfig, DEFAULT_PAGE, location as siteLocation } from './data/siteConfig';
 import profilePic from './assets/Rishab.jpeg';
@@ -527,6 +527,7 @@ const AppContent = () => {
           </div>
         </div>
       )}
+      <MusicPlayer />
     </div>
   );
 };
