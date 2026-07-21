@@ -60,23 +60,65 @@ const MusicPlayer = () => {
         whileTap={{ scale: 0.95 }}
         onClick={toggleMusic}
         title={isPlaying ? 'Pause Music' : 'Play Music'}
-        className={`relative flex items-center gap-3 h-14 cursor-pointer transition-all duration-300 backdrop-blur-[4px] backdrop-saturate-200 overflow-hidden ${
+        className={`relative flex items-center gap-3 h-14 cursor-pointer transition-all duration-300 backdrop-blur-[3px] backdrop-saturate-200 overflow-hidden ${
           isPlaying
-            ? 'px-4 rounded-full bg-gradient-to-br from-[#5ce1e6]/30 via-sky-400/15 to-transparent border-t border-l border-cyan-300/80 border-b border-r border-[#5ce1e6]/30 shadow-[0_10px_25px_rgba(0,0,0,0.35),0_0_20px_rgba(92,225,230,0.45),inset_0_2px_4px_rgba(255,255,255,0.7)]'
+            ? 'px-4 rounded-full bg-[#0b1f33]/40 border-t border-l border-cyan-300/80 border-b border-r border-[#5ce1e6]/40 shadow-[0_10px_25px_rgba(0,0,0,0.4),0_0_20px_rgba(92,225,230,0.45),inset_0_2px_4px_rgba(255,255,255,0.7)]'
             : 'w-14 justify-center rounded-[24px] bg-gradient-to-br from-white/30 via-cyan-400/10 to-transparent border-t border-l border-white/80 border-b border-r border-white/20 hover:border-cyan-300/80 hover:bg-gradient-to-br hover:from-[#5ce1e6]/25 hover:via-sky-400/10 hover:to-transparent shadow-[0_10px_25px_rgba(0,0,0,0.35),0_0_15px_rgba(92,225,230,0.25),inset_0_2px_4px_rgba(255,255,255,0.65)]'
         }`}
       >
-        {/* Animated Moving Liquid Water Wave inside capsule while song plays */}
+        {/* Real Liquid Water Simulation Container */}
         {isPlaying && (
-          <motion.div
-            animate={{
-              x: ['-25%', '5%', '-25%'],
-              y: ['0px', '-4px', '0px'],
-              scaleY: [1, 1.25, 1],
-            }}
-            transition={{ repeat: Infinity, duration: 3.5, ease: 'easeInOut' }}
-            className="absolute -inset-2 bg-gradient-to-r from-cyan-400/30 via-[#5ce1e6]/40 to-sky-300/30 pointer-events-none blur-[3px]"
-          />
+          <div className="absolute inset-x-0 bottom-0 top-[25%] pointer-events-none overflow-hidden rounded-b-full z-0">
+            {/* Primary Liquid Wave Surface Layer */}
+            <motion.div
+              animate={{ x: ['0%', '-50%'] }}
+              transition={{ repeat: Infinity, duration: 4, ease: 'linear' }}
+              className="absolute -top-3 left-0 w-[200%] h-6"
+            >
+              <svg viewBox="0 0 1200 120" preserveAspectRatio="none" className="w-full h-full fill-cyan-400/40">
+                <path d="M0,0 C150,90 350,-40 500,40 C650,120 900,-20 1200,20 L1200,120 L0,120 Z" />
+              </svg>
+            </motion.div>
+
+            {/* Secondary Opposite Sloshing Wave Layer */}
+            <motion.div
+              animate={{ x: ['-50%', '0%'] }}
+              transition={{ repeat: Infinity, duration: 2.8, ease: 'linear' }}
+              className="absolute -top-4 left-0 w-[200%] h-7 opacity-60"
+            >
+              <svg viewBox="0 0 1200 120" preserveAspectRatio="none" className="w-full h-full fill-[#5ce1e6]/35">
+                <path d="M0,30 C200,-30 400,80 600,10 C800,-40 1000,70 1200,30 L1200,120 L0,120 Z" />
+              </svg>
+            </motion.div>
+
+            {/* Liquid Water Fill Body */}
+            <div className="absolute inset-0 bg-gradient-to-t from-cyan-600/50 via-[#5ce1e6]/35 to-cyan-400/25 backdrop-blur-[1px]" />
+          </div>
+        )}
+
+        {/* Rising Animated Water Bubbles */}
+        {isPlaying && (
+          <div className="absolute inset-0 pointer-events-none overflow-hidden z-10">
+            {[
+              { left: '15%', size: 4, delay: 0, dur: 2.2 },
+              { left: '35%', size: 3, delay: 0.8, dur: 1.7 },
+              { left: '60%', size: 5, delay: 1.4, dur: 2.5 },
+              { left: '80%', size: 3.5, delay: 0.4, dur: 2.0 },
+              { left: '92%', size: 4.5, delay: 1.1, dur: 2.3 },
+            ].map((b, i) => (
+              <motion.span
+                key={i}
+                animate={{
+                  y: ['120%', '-20%'],
+                  opacity: [0, 0.85, 0],
+                  x: [0, (i % 2 === 0 ? 5 : -5), 0],
+                }}
+                transition={{ repeat: Infinity, duration: b.dur, delay: b.delay, ease: 'easeOut' }}
+                className="absolute bottom-1 bg-white/80 rounded-full border border-cyan-200/90 shadow-[0_0_6px_#5ce1e6]"
+                style={{ left: b.left, width: b.size, height: b.size }}
+              />
+            ))}
+          </div>
         )}
 
         {/* Music icon */}
@@ -96,7 +138,7 @@ const MusicPlayer = () => {
                 animate={{ opacity: 1, scaleY: 1 }}
                 exit={{ opacity: 0, scaleY: 0 }}
                 transition={{ duration: 0.2 }}
-                className="relative z-20 w-[1.5px] h-6 bg-gradient-to-b from-transparent via-[#5ce1e6]/70 to-transparent rounded-full shrink-0 shadow-[0_0_6px_#5ce1e6]"
+                className="relative z-20 w-[1.5px] h-6 bg-gradient-to-b from-transparent via-[#5ce1e6]/80 to-transparent rounded-full shrink-0 shadow-[0_0_6px_#5ce1e6]"
               />
 
               {/* iOS Voice Memo Style Animated Waveform Capsule */}
