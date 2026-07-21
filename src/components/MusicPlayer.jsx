@@ -48,10 +48,10 @@ const MusicPlayer = () => {
         whileTap={{ scale: 0.92 }}
         onClick={toggleMusic}
         title={isPlaying ? 'Pause Music' : 'Play Music'}
-        className={`relative flex items-center justify-center h-14 w-14 rounded-2xl border backdrop-blur-md cursor-pointer transition-all duration-300 ${
+        className={`relative flex items-center justify-center h-14 w-14 rounded-2xl cursor-pointer transition-all duration-300 backdrop-blur-xl backdrop-saturate-150 ${
           isPlaying
-            ? 'border-[#5ce1e6]/70 bg-[#5ce1e6]/20 shadow-[0_0_20px_rgba(92,225,230,0.45),inset_0_0_12px_rgba(92,225,230,0.3)]'
-            : 'border-[#5ce1e6]/35 bg-[#0b0f1f]/50 hover:bg-[#5ce1e6]/15 hover:border-[#5ce1e6]/60 shadow-[0_0_12px_rgba(92,225,230,0.2)]'
+            ? 'bg-[#5ce1e6]/15 border border-[#5ce1e6]/60 border-t-[#5ce1e6]/90 shadow-[0_8px_32px_0_rgba(0,0,0,0.37),0_0_20px_rgba(92,225,230,0.4),inset_0_1px_1px_0_rgba(255,255,255,0.5)]'
+            : 'bg-white/10 hover:bg-[#5ce1e6]/15 border border-white/20 border-t-white/40 hover:border-[#5ce1e6]/50 shadow-[0_8px_32px_0_rgba(0,0,0,0.37),inset_0_1px_1px_0_rgba(255,255,255,0.4)]'
         }`}
       >
         {/* Animated Soundwaves inside the transparent button */}
