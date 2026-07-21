@@ -66,15 +66,18 @@ const MusicPlayer = () => {
             : 'w-14 justify-center rounded-[24px] bg-gradient-to-br from-white/30 via-cyan-400/10 to-transparent border-t border-l border-white/80 border-b border-r border-white/20 hover:border-cyan-300/80 hover:bg-gradient-to-br hover:from-[#5ce1e6]/25 hover:via-sky-400/10 hover:to-transparent shadow-[0_10px_25px_rgba(0,0,0,0.35),0_0_15px_rgba(92,225,230,0.25),inset_0_2px_4px_rgba(255,255,255,0.65)]'
         }`}
       >
-        {/* Liquid background wave shimmer */}
-        <motion.div
-          animate={{
-            borderRadius: ['40% 60% 70% 30%/40% 50% 60% 50%', '60% 40% 30% 70%/50% 60% 40% 60%', '40% 60% 70% 30%/40% 50% 60% 50%'],
-            transform: ['translateY(0px) rotate(0deg)', 'translateY(1px) rotate(180deg)', 'translateY(0px) rotate(360deg)']
-          }}
-          transition={{ repeat: Infinity, duration: 8, ease: 'linear' }}
-          className="absolute -bottom-3 -left-3 -right-3 h-10 bg-cyan-400/15 pointer-events-none blur-[1px]"
-        />
+        {/* Animated Moving Liquid Water Wave inside capsule while song plays */}
+        {isPlaying && (
+          <motion.div
+            animate={{
+              x: ['-25%', '5%', '-25%'],
+              y: ['0px', '-4px', '0px'],
+              scaleY: [1, 1.25, 1],
+            }}
+            transition={{ repeat: Infinity, duration: 3.5, ease: 'easeInOut' }}
+            className="absolute -inset-2 bg-gradient-to-r from-cyan-400/30 via-[#5ce1e6]/40 to-sky-300/30 pointer-events-none blur-[3px]"
+          />
+        )}
 
         {/* Music icon */}
         <img
@@ -83,26 +86,38 @@ const MusicPlayer = () => {
           className="relative z-20 h-9 w-9 shrink-0 object-contain drop-shadow-[0_2px_8px_rgba(92,225,230,0.8)]"
         />
 
-        {/* iOS Voice Memo Style Animated Waveform Capsule */}
+        {/* Divider Line & Waveform */}
         <AnimatePresence>
           {isPlaying && (
-            <motion.div
-              initial={{ opacity: 0, scale: 0.8, x: -10 }}
-              animate={{ opacity: 1, scale: 1, x: 0 }}
-              exit={{ opacity: 0, scale: 0.8, x: -10 }}
-              transition={{ duration: 0.25, ease: 'easeOut' }}
-              className="relative z-20 flex items-center gap-1.5 h-10 px-1"
-            >
-              {waveformBars.map((bar, i) => (
-                <motion.span
-                  key={i}
-                  animate={{ height: [`${bar.min}px`, `${bar.max}px`, `${bar.min}px`] }}
-                  transition={{ repeat: Infinity, duration: bar.speed, ease: 'easeInOut', delay: bar.delay }}
-                  className="w-1.5 bg-[#b9f3fc] rounded-full shadow-[0_0_8px_rgba(92,225,230,0.9)]"
-                  style={{ height: `${(bar.min + bar.max) / 2}px` }}
-                />
-              ))}
-            </motion.div>
+            <>
+              {/* Divider Line between Icon and Wave */}
+              <motion.div
+                initial={{ opacity: 0, scaleY: 0 }}
+                animate={{ opacity: 1, scaleY: 1 }}
+                exit={{ opacity: 0, scaleY: 0 }}
+                transition={{ duration: 0.2 }}
+                className="relative z-20 w-[1.5px] h-6 bg-gradient-to-b from-transparent via-[#5ce1e6]/70 to-transparent rounded-full shrink-0 shadow-[0_0_6px_#5ce1e6]"
+              />
+
+              {/* iOS Voice Memo Style Animated Waveform Capsule */}
+              <motion.div
+                initial={{ opacity: 0, scale: 0.8, x: -10 }}
+                animate={{ opacity: 1, scale: 1, x: 0 }}
+                exit={{ opacity: 0, scale: 0.8, x: -10 }}
+                transition={{ duration: 0.25, ease: 'easeOut' }}
+                className="relative z-20 flex items-center gap-1.5 h-10 px-1"
+              >
+                {waveformBars.map((bar, i) => (
+                  <motion.span
+                    key={i}
+                    animate={{ height: [`${bar.min}px`, `${bar.max}px`, `${bar.min}px`] }}
+                    transition={{ repeat: Infinity, duration: bar.speed, ease: 'easeInOut', delay: bar.delay }}
+                    className="w-1.5 bg-[#b9f3fc] rounded-full shadow-[0_0_8px_rgba(92,225,230,0.9)]"
+                    style={{ height: `${(bar.min + bar.max) / 2}px` }}
+                  />
+                ))}
+              </motion.div>
+            </>
           )}
         </AnimatePresence>
       </motion.button>
