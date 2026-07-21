@@ -42,57 +42,52 @@ const MusicPlayer = () => {
   };
 
   return (
-    <div className="fixed bottom-5 right-5 z-[999] flex items-center gap-2 select-none">
-      {/* Animated Soundwaves / Equalizer bars when music is ON */}
-      <AnimatePresence>
-        {isPlaying && (
-          <motion.div
-            initial={{ opacity: 0, scale: 0.8, x: 10 }}
-            animate={{ opacity: 1, scale: 1, x: 0 }}
-            exit={{ opacity: 0, scale: 0.8, x: 10 }}
-            transition={{ duration: 0.2 }}
-            className="flex items-end gap-1 h-7 px-2.5 py-1 rounded-lg border border-[#5ce1e6]/40 bg-[#0b0f1f]/90 backdrop-blur-md shadow-[0_0_12px_rgba(92,225,230,0.3)]"
-          >
-            <motion.span
-              animate={{ height: ['20%', '100%', '30%', '80%', '20%'] }}
-              transition={{ repeat: Infinity, duration: 0.8, ease: 'easeInOut' }}
-              className="w-1 bg-[#5ce1e6] rounded-full"
-            />
-            <motion.span
-              animate={{ height: ['60%', '20%', '90%', '40%', '60%'] }}
-              transition={{ repeat: Infinity, duration: 0.6, ease: 'easeInOut', delay: 0.1 }}
-              className="w-1 bg-[#7de7eb] rounded-full"
-            />
-            <motion.span
-              animate={{ height: ['30%', '80%', '40%', '100%', '30%'] }}
-              transition={{ repeat: Infinity, duration: 0.7, ease: 'easeInOut', delay: 0.2 }}
-              className="w-1 bg-[#5ce1e6] rounded-full"
-            />
-            <motion.span
-              animate={{ height: ['90%', '40%', '70%', '20%', '90%'] }}
-              transition={{ repeat: Infinity, duration: 0.9, ease: 'easeInOut', delay: 0.15 }}
-              className="w-1 bg-[#7de7eb] rounded-full"
-            />
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      {/* Main Music Toggle Button */}
+    <div className="fixed bottom-5 right-5 z-[999] flex items-center justify-center select-none">
       <motion.button
-        whileHover={{ scale: 1.1 }}
-        whileTap={{ scale: 0.9 }}
+        whileHover={{ scale: 1.12 }}
+        whileTap={{ scale: 0.92 }}
         onClick={toggleMusic}
         title={isPlaying ? 'Pause Music' : 'Play Music'}
-        className={`relative flex items-center justify-center h-12 w-12 rounded-xl border transition-all duration-300 backdrop-blur-md shadow-lg ${
-          isPlaying
-            ? 'border-[#5ce1e6] bg-[#5ce1e6]/20 shadow-[0_0_15px_rgba(92,225,230,0.5)]'
-            : 'border-white/20 bg-[#0b0f1f]/80 hover:border-[#5ce1e6]/50'
-        }`}
+        className="relative flex items-center justify-center h-14 w-14 bg-transparent border-0 outline-none p-0 cursor-pointer"
       >
+        {/* Animated Soundwaves inside the transparent button */}
+        <AnimatePresence>
+          {isPlaying && (
+            <motion.div
+              initial={{ opacity: 0, scale: 0.8 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.8 }}
+              className="absolute inset-0 flex items-center justify-center gap-[3px] pointer-events-none"
+            >
+              <motion.span
+                animate={{ height: ['25%', '85%', '35%', '75%', '25%'] }}
+                transition={{ repeat: Infinity, duration: 0.8, ease: 'easeInOut' }}
+                className="w-1 bg-[#5ce1e6]/70 rounded-full h-8 shadow-[0_0_8px_#5ce1e6]"
+              />
+              <motion.span
+                animate={{ height: ['65%', '25%', '95%', '45%', '65%'] }}
+                transition={{ repeat: Infinity, duration: 0.6, ease: 'easeInOut', delay: 0.1 }}
+                className="w-1 bg-[#7de7eb]/80 rounded-full h-8 shadow-[0_0_8px_#7de7eb]"
+              />
+              <motion.span
+                animate={{ height: ['35%', '75%', '45%', '90%', '35%'] }}
+                transition={{ repeat: Infinity, duration: 0.7, ease: 'easeInOut', delay: 0.2 }}
+                className="w-1 bg-[#5ce1e6]/70 rounded-full h-8 shadow-[0_0_8px_#5ce1e6]"
+              />
+              <motion.span
+                animate={{ height: ['85%', '45%', '65%', '25%', '85%'] }}
+                transition={{ repeat: Infinity, duration: 0.9, ease: 'easeInOut', delay: 0.15 }}
+                className="w-1 bg-[#7de7eb]/80 rounded-full h-8 shadow-[0_0_8px_#7de7eb]"
+              />
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* Music icon */}
         <img
           src={isPlaying ? musicOnIcon : musicOffIcon}
           alt={isPlaying ? 'Music On' : 'Music Off'}
-          className="h-7 w-7 object-contain drop-shadow-[0_0_4px_rgba(92,225,230,0.6)]"
+          className="relative z-10 h-9 w-9 object-contain drop-shadow-[0_0_8px_rgba(92,225,230,0.8)]"
         />
       </motion.button>
     </div>
