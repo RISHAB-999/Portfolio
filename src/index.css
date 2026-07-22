@@ -59,14 +59,89 @@
     background-size: 32px 32px;
     background-repeat: repeat;
     image-rendering: pixelated;
-    /* Raised stone-block bevel: light top/left, dark bottom/right edges for a 3D
-       feel, plus a crisp dark outline + soft drop so the blocks read distinctly
-       against the dirt/grass background. */
+  /* Raised stone-block bevel: light top/left, dark bottom/right edges for a 3D
+     feel, plus a crisp dark outline + soft drop so the blocks read distinctly
+     against the dirt/grass background. */
     border-style: solid;
     border-width: 3px;
     border-color: #8c8c8c #2c2c2c #2c2c2c #8c8c8c; /* top right bottom left */
     box-shadow: 0 0 0 1px #161616, 0 4px 10px rgba(0, 0, 0, 0.5);
   }
+}
+
+/* Glass Card & Liquid Glass Styling */
+.glass-card,
+.liquid-glass {
+  background: linear-gradient(
+    135deg,
+    rgba(255, 255, 255, 0.14) 0%,
+    rgba(255, 255, 255, 0.03) 100%
+  ), rgba(15, 23, 42, 0.60);
+  backdrop-filter: blur(16px) saturate(180%);
+  -webkit-backdrop-filter: blur(16px) saturate(180%);
+  border-radius: 24px;
+  border: 1px solid rgba(255, 255, 255, 0.28);
+  box-shadow: 
+    0 16px 40px rgba(0, 0, 0, 0.35),
+    inset 0 1.5px 1px rgba(255, 255, 255, 0.65),
+    inset 0 -1px 1px rgba(0, 0, 0, 0.35),
+    inset 0 0 12px rgba(255, 255, 255, 0.15);
+  position: relative;
+}
+
+/* Liquid Glass Slider Custom Track & Convex Bezel Thumb */
+.liquid-slider {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 100%;
+  height: 6px;
+  background: rgba(255, 255, 255, 0.12);
+  border-radius: 9999px;
+  outline: none;
+  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.5), inset 0 0 1px rgba(255, 255, 255, 0.2);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.liquid-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 16px;
+  height: 16px;
+  border-radius: 9999px;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.65) 0%, rgba(255, 255, 255, 0.25) 100%), rgba(255, 255, 255, 0.2);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 1.5px solid rgba(255, 255, 255, 0.85);
+  box-shadow: 
+    0 4px 10px rgba(0, 0, 0, 0.4),
+    inset 0 1px 2px rgba(255, 255, 255, 0.9),
+    0 0 12px rgba(92, 225, 230, 0.6);
+  cursor: pointer;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.liquid-slider::-webkit-slider-thumb:hover {
+  transform: scale(1.2);
+  box-shadow: 
+    0 6px 14px rgba(0, 0, 0, 0.5),
+    inset 0 1px 2px rgba(255, 255, 255, 1),
+    0 0 16px rgba(92, 225, 230, 0.95);
+}
+
+.liquid-slider::-moz-range-thumb {
+  width: 16px;
+  height: 16px;
+  border-radius: 9999px;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.65) 0%, rgba(255, 255, 255, 0.25) 100%), rgba(255, 255, 255, 0.2);
+  backdrop-filter: blur(8px);
+  border: 1.5px solid rgba(255, 255, 255, 0.85);
+  box-shadow: 
+    0 4px 10px rgba(0, 0, 0, 0.4),
+    inset 0 1px 2px rgba(255, 255, 255, 0.9),
+    0 0 12px rgba(92, 225, 230, 0.6);
+  cursor: pointer;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
 }
 
 @keyframes hdrTwinkle {

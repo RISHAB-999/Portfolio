@@ -3,7 +3,7 @@
 
 import githubWhite from '../assets/github-mark-white.svg';
 import linkedin from '../assets/linkedin.svg';
-import karstenLogo from '../assets/karstenLogo_pixel_art.png';
+import rishabLogo from '../assets/Rishablogo_pixel_art.png';
 import resumePdf from '../assets/resume.pdf';
 
 // Page background images.
@@ -15,8 +15,8 @@ import pixelCity from '../assets/pixel-city3.gif';
 
 // Brand / identity shown in the navbar.
 export const brand = {
-  logo: karstenLogo,
-  alt: 'karsten logo',
+  logo: rishabLogo,
+  alt: 'Rishab Logo',
 };
 
 // Contact details used by the footer and contact page.

@@ -274,10 +274,10 @@ const MusicPlayer = ({ embedded = false }) => {
               setTilt({ rotateX: 0, rotateY: 0 });
             }}
             style={{ transformOrigin: cardOrigin }}
-            className={`relative flex items-center gap-1.5 h-10 backdrop-blur-[4px] overflow-hidden pointer-events-auto ${
+            className={`relative flex items-center gap-1.5 h-10 liquid-glass overflow-hidden pointer-events-auto ${
               isPlaying
-                ? 'pl-2.5 pr-3.5 rounded-full bg-cyan-950/40 border-t-2 border-l-2 border-[#5ce1e6] border-b border-r border-[#5ce1e6]/40 shadow-[0_10px_25px_rgba(0,0,0,0.6),0_0_18px_rgba(92,225,230,0.5),inset_0_1px_3px_rgba(255,255,255,0.7)]'
-                : 'w-10 justify-center rounded-full bg-cyan-950/40 border-t-2 border-l-2 border-[#5ce1e6] border-b border-r border-[#5ce1e6]/40 shadow-[0_10px_25px_rgba(0,0,0,0.6),0_0_18px_rgba(92,225,230,0.4),inset_0_1px_3px_rgba(255,255,255,0.7)]'
+                ? 'pl-2.5 pr-3.5 !rounded-full'
+                : 'w-10 justify-center !rounded-full'
             }`}
           >
             {isHovered && enableRepulsion && (

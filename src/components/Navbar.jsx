@@ -4,7 +4,7 @@ import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 
 import { close, menu } from '../assets';
-import { navLinks, socialMedia } from '../data/siteConfig';
+import { brand, navLinks, socialMedia } from '../data/siteConfig';
 
 const linkVariants = {
   hover: {
@@ -97,39 +97,57 @@ const Navbar = () => {
   }, [toggle]);
 
   return (
-    <nav className="w-full flex py-2 justify-between items-center navbar relative sm:px-20 px-2">
-
-      <ul className="list-none sm:flex text-xs hidden justify-end items-center flex-1">
-        {navLinks.map((nav, index) => (
-          <motion.li
-            key={nav.id}
-            variants={linkVariants}
-            whileHover="hover"
-            whileTap="tap"
-            className={`font-source-code-pro font-normal cursor-pointer text-base sm:text-lg text-white ${
-              index === navLinks.length - 1 ? 'mr-0' : 'mr-10'
-            }`}
-            onClick={() => handleNavigation(nav.id)}
-          >
-            <span className="text-white">{nav.title}</span>
-          </motion.li>
-        ))}
-      </ul>
-
-      <div className="sm:hidden flex flex-1 justify-end items-center">
-        <button
-          type="button"
-          className="relative z-10 p-1"
-          aria-label={toggle ? 'Close menu' : 'Open menu'}
-          aria-expanded={toggle}
-          onClick={() => setToggle((v) => !v)}
+    <div className="w-full flex justify-center pt-3 pb-1 px-4 relative z-50 pointer-events-auto">
+      <nav className="glass-card w-[min(94vw,700px)] h-11 sm:h-13 flex items-center justify-between px-6 sm:px-10 !rounded-full transition-all mx-auto relative !overflow-visible">
+        {/* Brand Logo directly inside navbar (pops cleanly out over top/bottom of slim card) */}
+        <motion.div
+          whileHover={{ scale: 1.3, y: -1 }}
+          whileTap={{ scale: 1.2 }}
+          onClick={() => handleNavigation('home')}
+          className="flex items-center cursor-pointer select-none z-30 relative"
+          title="Home"
         >
           <img
-            src={toggle ? close : menu}
-            alt=""
-            className="w-[28px] h-[28px] object-contain"
+            src={brand.logo}
+            alt={brand.alt}
+            className="h-12 sm:h-15 max-w-none object-contain drop-shadow-[0_0_16px_rgba(92,225,230,0.9)] transition-all duration-200"
           />
-        </button>
+        </motion.div>
+
+        {/* Desktop Navigation Links */}
+        <ul className="list-none sm:flex text-xs hidden items-center gap-8 sm:gap-12 z-10">
+          {navLinks.map((nav) => (
+            <motion.li
+              key={nav.id}
+              variants={linkVariants}
+              whileHover="hover"
+              whileTap="tap"
+              className="font-source-code-pro font-semibold cursor-pointer text-base sm:text-lg text-white hover:text-[#5ce1e6] transition-colors"
+              onClick={() => handleNavigation(nav.id)}
+            >
+              <span className="text-white hover:text-[#5ce1e6] transition-colors drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]">
+                {nav.title}
+              </span>
+            </motion.li>
+          ))}
+        </ul>
+
+        {/* Mobile Hamburger button */}
+        <div className="sm:hidden flex items-center">
+          <button
+            type="button"
+            className="relative z-10 p-1"
+            aria-label={toggle ? 'Close menu' : 'Open menu'}
+            aria-expanded={toggle}
+            onClick={() => setToggle((v) => !v)}
+          >
+            <img
+              src={toggle ? close : menu}
+              alt=""
+              className="w-[24px] h-[24px] object-contain"
+            />
+          </button>
+        </div>
 
         {/* Portal to <body> so the overlay escapes the navbar's z-10 stacking context */}
         {createPortal(
@@ -238,8 +256,8 @@ const Navbar = () => {
           </AnimatePresence>,
           document.body
         )}
-      </div>
-    </nav>
+      </nav>
+    </div>
   );
 };
 

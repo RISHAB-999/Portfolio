@@ -27,9 +27,13 @@ const MusicCard = ({
   // Click Outside to Minimize/Close Card
   useEffect(() => {
     const handleClickOutside = (e) => {
-      if (cardRef.current && !cardRef.current.contains(e.target)) {
-        onClose();
+      if (
+        cardRef.current &&
+        (cardRef.current.contains(e.target) || (e.target && !e.target.isConnected))
+      ) {
+        return;
       }
+      onClose();
     };
 
     const timer = setTimeout(() => {
@@ -41,34 +45,6 @@ const MusicCard = ({
       document.removeEventListener('pointerdown', handleClickOutside);
     };
   }, [onClose]);
-
-  const resetTimer = () => {
-    if (autoCloseTimerRef.current) {
-      clearTimeout(autoCloseTimerRef.current);
-    }
-    autoCloseTimerRef.current = setTimeout(() => {
-      onClose();
-    }, 10000);
-  };
-
-  useEffect(() => {
-    resetTimer();
-    return () => {
-      if (autoCloseTimerRef.current) {
-        clearTimeout(autoCloseTimerRef.current);
-      }
-    };
-  }, [isPlaying, currentTrackIndex]);
-
-  const handleMouseEnter = () => {
-    if (autoCloseTimerRef.current) {
-      clearTimeout(autoCloseTimerRef.current);
-    }
-  };
-
-  const handleMouseLeave = () => {
-    resetTimer();
-  };
 
   const handleStopAndClose = (e) => {
     toggleMusic(e);
@@ -89,12 +65,10 @@ const MusicCard = ({
       animate={{ opacity: 1, scale: 1 }}
       exit={{ opacity: 0, scale: 0.95 }}
       transition={{ duration: 0.12, ease: 'easeOut' }}
-      onMouseEnter={handleMouseEnter}
-      onMouseLeave={handleMouseLeave}
       style={{ transformOrigin: isMobileNav ? 'bottom center' : 'top left' }}
       className={`relative w-[min(92vw,310px)] ${
         isMobileNav ? 'p-2.5 text-xs' : 'p-3.5 sm:p-4'
-      } rounded-3xl backdrop-blur-[2px] bg-cyan-400/10 border-t-2 border-l-2 border-[#5ce1e6] border-b border-r border-[#5ce1e6]/30 shadow-[0_20px_50px_rgba(0,0,0,0.6),0_0_30px_rgba(92,225,230,0.35),inset_0_2px_4px_rgba(255,255,255,0.7)] text-white overflow-hidden pointer-events-auto mx-auto`}
+      } liquid-glass text-white overflow-hidden pointer-events-auto mx-auto`}
     >
       {/* Ambient Shimmer */}
       <div className="absolute -top-20 -right-20 w-44 h-44 bg-[#5ce1e6]/20 rounded-full blur-3xl pointer-events-none" />
@@ -200,8 +174,8 @@ const MusicCard = ({
         )}
       </AnimatePresence>
 
-      {/* Interactive Music Time Scrubber / Seek Bar (Red & Cyan Progress Bar) */}
-      <div className={`flex flex-col gap-0.5 ${isMobileNav ? 'mb-2 p-1.5' : 'mb-2.5 p-2'} bg-white/5 rounded-xl border border-white/10`}>
+      {/* Interactive Music Time Scrubber / Seek Bar (Liquid Glass Slider) */}
+      <div className={`flex flex-col gap-1 ${isMobileNav ? 'mb-2 p-1.5' : 'mb-2.5 p-2'} bg-white/5 backdrop-blur-md rounded-xl border border-white/10`}>
         <div className="flex items-center justify-between text-[10px] font-mono text-gray-300 font-bold px-0.5">
           <span>{formatTime(currentTime)}</span>
           <span>{formatTime(duration)}</span>
@@ -213,51 +187,51 @@ const MusicCard = ({
           step="0.1"
           value={currentTime}
           onChange={handleSeek}
-          className="w-full h-1 bg-gray-700/80 rounded-lg appearance-none cursor-pointer accent-[#5ce1e6] hover:accent-white transition-all"
+          className="liquid-slider"
         />
       </div>
 
       {/* Audio Controls Bar (Liquid Glass buttons matching main card aesthetic) */}
-      <div className="flex items-center justify-between gap-1.5 p-2 bg-white/5 backdrop-blur-md rounded-2xl border border-[#5ce1e6]/20 shadow-[inset_0_1px_2px_rgba(255,255,255,0.2)]">
-        {/* Prev, Play-Pause, Next Navigation Buttons with Liquid Glass & 3D bevels */}
-        <div className="flex items-center gap-2.5 sm:gap-3">
+      <div className="flex items-center justify-between gap-1 p-1.5 liquid-glass !rounded-2xl">
+        {/* Prev, Play-Pause, Next Navigation Buttons */}
+        <div className="flex items-center gap-1.5">
           <motion.button
-            whileHover={{ y: -2, scale: 1.08 }}
-            whileTap={{ y: 2, scale: 0.92 }}
+            whileHover={{ y: -1, scale: 1.08 }}
+            whileTap={{ y: 1, scale: 0.92 }}
             onClick={() => changeTrack(currentTrackIndex - 1)}
             title="Previous Track"
-            className="w-9 h-9 flex items-center justify-center rounded-2xl backdrop-blur-md bg-cyan-400/15 hover:bg-cyan-400/30 border-t-2 border-l-2 border-[#5ce1e6]/90 border-b border-r border-[#5ce1e6]/30 text-white hover:text-[#5ce1e6] shadow-[0_4px_16px_rgba(0,0,0,0.5),0_0_12px_rgba(92,225,230,0.35),inset_0_1.5px_3px_rgba(255,255,255,0.7)] cursor-pointer text-xs font-bold transition-all"
+            className="w-7 h-7 flex items-center justify-center rounded-xl liquid-glass text-white hover:text-[#5ce1e6] cursor-pointer text-[10px] font-bold transition-all"
           >
             ⏮
           </motion.button>
 
           <motion.button
-            whileHover={{ y: -2, scale: 1.1 }}
-            whileTap={{ y: 2, scale: 0.9 }}
+            whileHover={{ y: -1, scale: 1.08 }}
+            whileTap={{ y: 1, scale: 0.92 }}
             onClick={toggleMusic}
             title={isPlaying ? 'Pause' : 'Play'}
-            className={`w-10 h-10 flex items-center justify-center rounded-full backdrop-blur-md cursor-pointer text-base font-bold transition-all ${
+            className={`w-8 h-8 flex items-center justify-center rounded-full backdrop-blur-md cursor-pointer text-xs font-bold transition-all ${
               isPlaying
-                ? 'bg-gradient-to-br from-[#5ce1e6]/90 via-cyan-400/90 to-cyan-500/90 text-black border-t-2 border-l-2 border-white border-b border-r border-cyan-300 shadow-[0_6px_20px_rgba(92,225,230,0.7),0_0_25px_rgba(92,225,230,0.6),inset_0_2px_4px_rgba(255,255,255,0.9)]'
-                : 'bg-cyan-400/20 hover:bg-cyan-400/40 text-[#5ce1e6] hover:text-white border-t-2 border-l-2 border-[#5ce1e6] border-b border-r border-[#5ce1e6]/40 shadow-[0_4px_16px_rgba(0,0,0,0.5),0_0_15px_rgba(92,225,230,0.45),inset_0_1.5px_3px_rgba(255,255,255,0.8)]'
+                ? 'bg-gradient-to-br from-[#5ce1e6]/90 via-cyan-400/90 to-cyan-500/90 text-black border-t border-l border-white border-b border-r border-cyan-300 shadow-[0_4px_12px_rgba(92,225,230,0.7),0_0_15px_rgba(92,225,230,0.6),inset_0_1.5px_3px_rgba(255,255,255,0.9)]'
+                : 'liquid-glass text-[#5ce1e6] hover:text-white'
             }`}
           >
             {isPlaying ? '⏸' : '▶'}
           </motion.button>
 
           <motion.button
-            whileHover={{ y: -2, scale: 1.08 }}
-            whileTap={{ y: 2, scale: 0.92 }}
+            whileHover={{ y: -1, scale: 1.08 }}
+            whileTap={{ y: 1, scale: 0.92 }}
             onClick={() => changeTrack(currentTrackIndex + 1)}
             title="Next Track"
-            className="w-9 h-9 flex items-center justify-center rounded-2xl backdrop-blur-md bg-cyan-400/15 hover:bg-cyan-400/30 border-t-2 border-l-2 border-[#5ce1e6]/90 border-b border-r border-[#5ce1e6]/30 text-white hover:text-[#5ce1e6] shadow-[0_4px_16px_rgba(0,0,0,0.5),0_0_12px_rgba(92,225,230,0.35),inset_0_1.5px_3px_rgba(255,255,255,0.7)] cursor-pointer text-xs font-bold transition-all"
+            className="w-7 h-7 flex items-center justify-center rounded-xl liquid-glass text-white hover:text-[#5ce1e6] cursor-pointer text-[10px] font-bold transition-all"
           >
             ⏭
           </motion.button>
         </div>
 
-        {/* Animated Expandable Volume Control with Liquid Glass Speaker button */}
-        <div className="flex items-center gap-1.5 min-w-0 justify-end">
+        {/* Animated Expandable Volume Control with Liquid Slider */}
+        <div className="flex items-center gap-1 min-w-0 justify-end flex-1">
           <AnimatePresence>
             {showVolumeSlider && (
               <motion.div
@@ -265,7 +239,7 @@ const MusicCard = ({
                 animate={{ opacity: 1, width: 'auto' }}
                 exit={{ opacity: 0, width: 0 }}
                 transition={{ type: 'spring', stiffness: 400, damping: 30 }}
-                className="flex items-center gap-1.5 overflow-hidden pr-1"
+                className="flex items-center gap-1 overflow-hidden"
               >
                 <input
                   type="range"
@@ -274,9 +248,9 @@ const MusicCard = ({
                   step="0.01"
                   value={volume}
                   onChange={handleVolumeChange}
-                  className="w-14 sm:w-20 h-1 bg-gray-700/80 rounded-lg appearance-none cursor-pointer accent-[#5ce1e6]"
+                  className="liquid-slider w-12 sm:w-16"
                 />
-                <span className="text-[10px] text-[#5ce1e6] font-source-code-pro font-semibold min-w-[28px] text-right">
+                <span className="text-[10px] text-[#5ce1e6] font-source-code-pro font-semibold flex-shrink-0">
                   {Math.round(volume * 100)}%
                 </span>
               </motion.div>
@@ -284,11 +258,11 @@ const MusicCard = ({
           </AnimatePresence>
 
           <motion.button
-            whileHover={{ y: -2, scale: 1.12 }}
-            whileTap={{ y: 2, scale: 0.9 }}
+            whileHover={{ y: -1, scale: 1.08 }}
+            whileTap={{ y: 1, scale: 0.92 }}
             onClick={() => setShowVolumeSlider((prev) => !prev)}
             title={showVolumeSlider ? 'Close Volume Slider' : 'Open Volume Slider'}
-            className="w-9 h-9 rounded-2xl backdrop-blur-md bg-cyan-400/15 hover:bg-cyan-400/30 border-t-2 border-l-2 border-[#5ce1e6]/90 border-b border-r border-[#5ce1e6]/30 text-[#5ce1e6] hover:text-white shadow-[0_4px_16px_rgba(0,0,0,0.5),0_0_12px_rgba(92,225,230,0.35),inset_0_1.5px_3px_rgba(255,255,255,0.7)] transition-all cursor-pointer text-xs flex items-center justify-center"
+            className="w-7 h-7 rounded-xl backdrop-blur-md bg-cyan-400/15 hover:bg-cyan-400/30 border-t border-l border-[#5ce1e6]/90 border-b border-r border-[#5ce1e6]/30 text-[#5ce1e6] hover:text-white shadow-[0_2px_8px_rgba(0,0,0,0.4),0_0_8px_rgba(92,225,230,0.3),inset_0_1px_2px_rgba(255,255,255,0.6)] transition-all cursor-pointer text-[10px] flex items-center justify-center flex-shrink-0"
           >
             {volume === 0 ? '🔇' : '🔊'}
           </motion.button>
