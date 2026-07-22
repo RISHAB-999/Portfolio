@@ -67,22 +67,29 @@ const Navbar = () => {
     requestAnimationFrame(animateScroll);
   };
 
-  // While the pause menu is open (narrow screens only): close on Esc, and close
-  // if the window widens past the breakpoint so the menu can't get stuck open.
+  // While the pause menu is open (narrow screens only): close on Esc, freeze scroll, add pause-menu-open class.
   useEffect(() => {
-    if (!toggle) return;
-    // Freeze the page behind the overlay so it can't scroll while paused.
+    if (!toggle) {
+      document.body.classList.remove('pause-menu-open');
+      return;
+    }
+
+    document.body.classList.add('pause-menu-open');
     const prevOverflow = document.body.style.overflow;
     document.body.style.overflow = 'hidden';
+
     const onKey = (e) => {
       if (e.key === 'Escape') setToggle(false);
     };
     const onResize = () => {
       if (window.innerWidth >= 768) setToggle(false);
     };
+
     window.addEventListener('keydown', onKey);
     window.addEventListener('resize', onResize);
+
     return () => {
+      document.body.classList.remove('pause-menu-open');
       document.body.style.overflow = prevOverflow;
       window.removeEventListener('keydown', onKey);
       window.removeEventListener('resize', onResize);
@@ -124,13 +131,12 @@ const Navbar = () => {
           />
         </button>
 
-        {/* Portal to <body> so the overlay escapes the navbar's z-10 stacking
-            context — otherwise the grass strip / post-footer paint over it. */}
+        {/* Portal to <body> so the overlay escapes the navbar's z-10 stacking context */}
         {createPortal(
           <AnimatePresence>
             {toggle && (
               <motion.div
-                className="pause-menu fixed inset-0 z-[100] flex items-center justify-center"
+                className="pause-menu fixed inset-0 z-[100] flex items-center justify-center overflow-y-auto p-4"
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
@@ -156,78 +162,78 @@ const Navbar = () => {
 
                 {/* Taps inside the panel must not close the menu. */}
                 <motion.div
-                className="pause-panel"
-                variants={panelVariants}
-                initial="hidden"
-                animate="show"
-                exit="exit"
-                onClick={(e) => e.stopPropagation()}
-              >
-                <motion.div className="pause-title" variants={itemVariants}>
-                  <span className="pause-led" aria-hidden="true" />
-                  <span>❚❚ PAUSED</span>
-                </motion.div>
+                  className="pause-panel"
+                  variants={panelVariants}
+                  initial="hidden"
+                  animate="show"
+                  exit="exit"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  <motion.div className="pause-title" variants={itemVariants}>
+                    <span className="pause-led" aria-hidden="true" />
+                    <span>❚❚ PAUSED</span>
+                  </motion.div>
 
-                {navLinks.map((nav) => {
-                  const isActive = currentId === nav.id;
-                  return (
-                    <motion.button
-                      key={nav.id}
-                      type="button"
-                      variants={itemVariants}
-                      className={`pause-row ${isActive ? 'is-active' : ''}`}
-                      onClick={() => handleNavigation(nav.id)}
-                    >
-                      <span className="pause-row-cursor" aria-hidden="true">
-                        {isActive ? '▸' : ''}
-                      </span>
-                      <span className="pause-row-label">{nav.title}</span>
-                      <span className="pause-row-chevron" aria-hidden="true">
-                        {'>'}
-                      </span>
-                    </motion.button>
-                  );
-                })}
+                  {navLinks.map((nav) => {
+                    const isActive = currentId === nav.id;
+                    return (
+                      <motion.button
+                        key={nav.id}
+                        type="button"
+                        variants={itemVariants}
+                        className={`pause-row ${isActive ? 'is-active' : ''}`}
+                        onClick={() => handleNavigation(nav.id)}
+                      >
+                        <span className="pause-row-cursor" aria-hidden="true">
+                          {isActive ? '▸' : ''}
+                        </span>
+                        <span className="pause-row-label">{nav.title}</span>
+                        <span className="pause-row-chevron" aria-hidden="true">
+                          {'>'}
+                        </span>
+                      </motion.button>
+                    );
+                  })}
 
-                <motion.div className="pause-foot" variants={itemVariants}>
-                  <div className="pause-jacks">
-                    {socialMedia.map((s) => (
-                      <a
-                        key={s.id}
-                        href={s.link}
-                        target="_blank"
-                        rel="noreferrer"
+                  <motion.div className="pause-foot" variants={itemVariants}>
+                    <div className="pause-jacks">
+                      {socialMedia.map((s) => (
+                        <a
+                          key={s.id}
+                          href={s.link}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="pause-jack"
+                        >
+                          <img src={s.icon} alt="" />
+                        </a>
+                      ))}
+                      {/* Resume as a circular icon to match the social jacks. */}
+                      <button
+                        type="button"
                         className="pause-jack"
+                        aria-label="Resume"
+                        onClick={() => handleNavigation('resume')}
                       >
-                        <img src={s.icon} alt="" />
-                      </a>
-                    ))}
-                    {/* Resume as a circular icon to match the social jacks. */}
-                    <button
-                      type="button"
-                      className="pause-jack"
-                      aria-label="Resume"
-                      onClick={() => handleNavigation('resume')}
-                    >
-                      <svg
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="2"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        aria-hidden="true"
-                      >
-                        <path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z" />
-                        <path d="M14 3v5h5" />
-                        <line x1="9" y1="13" x2="15" y2="13" />
-                        <line x1="9" y1="17" x2="13" y2="17" />
-                      </svg>
-                    </button>
-                  </div>
+                        <svg
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="2"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          aria-hidden="true"
+                        >
+                          <path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z" />
+                          <path d="M14 3v5h5" />
+                          <line x1="9" y1="13" x2="15" y2="13" />
+                          <line x1="9" y1="17" x2="13" y2="17" />
+                        </svg>
+                      </button>
+                    </div>
+                  </motion.div>
                 </motion.div>
               </motion.div>
-            </motion.div>
             )}
           </AnimatePresence>,
           document.body

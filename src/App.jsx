@@ -1,5 +1,5 @@
 import { useRef, useEffect, useLayoutEffect, useState, Suspense } from 'react';
-import { HashRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
 import styles from './style';
 import './index.css';
 
@@ -57,13 +57,18 @@ const AppContent = () => {
   // desktop (cursor-follow) and mobile (rAF drift) — so neither cursor moves nor
   // scrolling ever trigger a React re-render of the whole app.
   const kirbyRef = useRef(null);
-  const [isMobile, setIsMobile] = useState(false);
+  const [isMobile, setIsMobile] = useState(() => typeof window !== 'undefined' && window.innerWidth < 640);
 
-  // Mouse tracking state for the global HUD
-  const [coords, setCoords] = useState({ x: 0, y: 0 });
+  // Mouse tracking — update HUD via DOM ref to avoid React re-renders on every mousemove
+  const coordsRef = useRef(null);
 
   useEffect(() => {
-    const handleMove = (e) => setCoords({ x: e.clientX, y: e.clientY });
+    const handleMove = (e) => {
+      if (coordsRef.current) {
+        coordsRef.current.textContent =
+          `X:\u00A0${String(e.clientX).padStart(4, '\u00A0')}\u00A0\u00A0Y:\u00A0${String(e.clientY).padStart(4, '\u00A0')}`;
+      }
+    };
     window.addEventListener('mousemove', handleMove);
     return () => window.removeEventListener('mousemove', handleMove);
   }, []);
@@ -283,13 +288,18 @@ const AppContent = () => {
 
 
   return (
-    <div className="relative">
-      {/* Global Mouse Tracker HUD */}
-      <div className="fixed top-4 left-4 z-50 pointer-events-none hidden sm:block">
-        <div className="font-source-code-pro text-[10px] text-[#5ce1e6] tracking-widest bg-[#06080e]/60 backdrop-blur-sm px-2 py-1 rounded border border-[#5ce1e6]/30 pixel-shadow">
-          X:&nbsp;{coords.x.toString().padStart(4, '\u00A0')}&nbsp;&nbsp;Y:&nbsp;{coords.y.toString().padStart(4, '\u00A0')}
+    <div className="relative w-full min-h-screen bg-primary overflow-x-hidden">
+      {/* Global Mouse Tracker HUD + Music Player — DOM ref for coords avoids re-renders */}
+      {!isMobile && (
+        <div style={{ position: 'fixed', top: '1rem', left: '1rem', zIndex: 999, display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: '4px', pointerEvents: 'none' }}>
+          <div className="font-source-code-pro text-[10px] text-[#5ce1e6] tracking-widest bg-[#06080e]/60 backdrop-blur-sm px-2 py-1 rounded border border-[#5ce1e6]/30 pixel-shadow">
+            <span ref={coordsRef}>X:&nbsp;&nbsp;&nbsp;&nbsp;0&nbsp;&nbsp;Y:&nbsp;&nbsp;&nbsp;&nbsp;0</span>
+          </div>
+          <div style={{ pointerEvents: 'auto' }}>
+            <MusicPlayer embedded />
+          </div>
         </div>
-      </div>
+      )}
 
       {/* Floating GIF — fixed so it stays visible on all pages including Resume */}
       <div
@@ -527,13 +537,14 @@ const AppContent = () => {
           </div>
         </div>
       )}
-      <MusicPlayer />
+      {/* Mobile music player — only visible when mobile menu is open */}
+      {isMobile && <MusicPlayer />}
     </div>
   );
 };
 
 const App = () => (
-  <Router>
+  <Router basename={import.meta.env.BASE_URL}>
     <AppContent />
   </Router>
 );

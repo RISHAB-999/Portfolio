@@ -38,7 +38,7 @@ const AudioClip = ({ clip, index }) => {
 const AudioCard = ({ project }) => (
   <section id={project.id} className={`flex flex-col ${styles.paddingY}`}>
     <div className={`flex-1 ${styles.flexCenter} flex-col xl:px-0 sm:px-16 px-6`}>
-      <div className="flex flex-col items-center py-[60px] px-[60px] bg-discount-gradient rounded-[100px]">
+      <div className="flex flex-col items-center py-6 px-4 sm:py-[60px] sm:px-[60px] bg-discount-gradient rounded-3xl sm:rounded-[100px]">
         <div className="flex flex-col">
           <p className="font-source-code-pro font-bold text-white mb-3 md:text-[50px] text-[24px] text-center">
             {project.title}
@@ -80,7 +80,7 @@ const MediaCard = ({ project }) => {
   return (
     <section id={project.id} className={`flex flex-col ${styles.paddingY}`}>
       <div className={`flex-1 ${styles.flexStart} flex-col xl:px-0 sm:px-16 px-6`}>
-        <div className="flex flex-col items-center py-[60px] px-[60px] bg-discount-gradient rounded-[100px]">
+        <div className="flex flex-col items-center py-6 px-4 sm:py-[60px] sm:px-[60px] bg-discount-gradient rounded-3xl sm:rounded-[100px]">
           <div className="flex items-center flex-col">
             <p className="font-source-code-pro font-bold text-white mb-10 md:ml-10 md:text-[50px] text-[24px]">
               {project.title}
