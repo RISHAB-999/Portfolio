@@ -542,7 +542,7 @@ const AppContent = () => {
 };
 
 const App = () => (
-  <Router basename={import.meta.env.BASE_URL}>
+  <Router>
     <AppContent />
   </Router>
 );
