@@ -259,8 +259,6 @@ const MusicPlayer = ({ embedded = false }) => {
             isMobileNav={isMobileNav}
           />
         ) : (
-          <>
-          <LiquidGlassFilter id="capsule-glass" targetRef={capsuleRef} options={{ blur: 0.5, refractionScale: 1.5, radius: 20 }} />
           <motion.div
             ref={capsuleRef}
             key="music-capsule"
@@ -278,8 +276,8 @@ const MusicPlayer = ({ embedded = false }) => {
               setMousePos({ x: -999, y: -999 });
               setTilt({ rotateX: 0, rotateY: 0 });
             }}
-            style={{ transformOrigin: cardOrigin, '--svg-glass-url': 'url(#capsule-glass)' }}
-            className={`relative flex items-center gap-1.5 h-10 liquid-glass use-svg-glass overflow-hidden pointer-events-auto ${
+            style={{ transformOrigin: cardOrigin }}
+            className={`relative flex items-center gap-1.5 h-10 liquid-glass overflow-hidden pointer-events-auto ${
               isPlaying
                 ? 'pl-2.5 pr-3.5 !rounded-full'
                 : 'w-10 justify-center !rounded-full'
@@ -371,8 +369,7 @@ const MusicPlayer = ({ embedded = false }) => {
             )}
           </AnimatePresence>
         </motion.div>
-        </>
-      )}
+        )}
     </AnimatePresence>
 
       {/* Floating Popup tooltip when autoplay is blocked by browser */}

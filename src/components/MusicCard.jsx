@@ -69,17 +69,16 @@ const MusicCard = ({
 
   return (
     <>
-    <LiquidGlassFilter id="music-glass" targetRef={cardRef} options={{ blur: 0.5, refractionScale: 1.5, radius: 20 }} />
     <motion.div
       ref={cardRef}
       initial={{ opacity: 0, scale: 0.92 }}
       animate={{ opacity: 1, scale: 1 }}
       exit={{ opacity: 0, scale: 0.95 }}
       transition={{ duration: 0.12, ease: 'easeOut' }}
-      style={{ transformOrigin: isMobileNav ? 'bottom center' : 'top left', '--svg-glass-url': 'url(#music-glass)' }}
+      style={{ transformOrigin: isMobileNav ? 'bottom center' : 'top left' }}
       className={`relative w-[min(92vw,310px)] ${
         isMobileNav ? 'p-2.5 text-xs' : 'p-3.5 sm:p-4'
-      } liquid-glass use-svg-glass text-white overflow-hidden pointer-events-auto mx-auto`}
+      } liquid-glass text-white overflow-hidden pointer-events-auto mx-auto`}
     >
       {/* Ambient Shimmer */}
       <div className="absolute -top-20 -right-20 w-44 h-44 bg-[#5ce1e6]/20 rounded-full blur-3xl pointer-events-none" />

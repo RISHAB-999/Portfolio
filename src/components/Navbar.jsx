@@ -128,8 +128,7 @@ const Navbar = () => {
   return (
     <>
       <div className={`fixed top-0 left-0 w-full flex justify-center pt-3 pb-1 px-4 z-50 pointer-events-none transition-transform duration-300 ${showNavbar ? 'translate-y-0' : '-translate-y-[150%]'}`}>
-      <LiquidGlassFilter id="navbar-glass" targetRef={navRef} options={{ blur: 0.5, refractionScale: 1.5, radius: 22 }} />
-      <nav
+      <motion.nav
         ref={navRef}
         onMouseMove={handleMouseMove}
         onMouseEnter={() => setIsHovered(true)}
@@ -316,7 +315,7 @@ const Navbar = () => {
           </AnimatePresence>,
           document.body
         )}
-      </nav>
+      </motion.nav>
       </div>
     </>
   );

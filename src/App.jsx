@@ -349,8 +349,8 @@ const AppContent = () => {
               key={idx}
               className={
                 isResumeBg
-                  ? 'fixed inset-0 z-0 transition-opacity duration-500 ease-in-out'
-                  : `absolute inset-x-0 top-0 bottom-[120px] sm:bottom-[88px] ${styles.paddingX} flex flex-col z-0 transition-opacity duration-500 ease-in-out`
+                  ? 'fixed inset-0 z-0'
+                  : `absolute inset-x-0 top-0 bottom-[120px] sm:bottom-[88px] ${styles.paddingX} flex flex-col z-0`
               }
               style={{
                 backgroundImage: `url(${bgSrc})`,
@@ -358,6 +358,9 @@ const AppContent = () => {
                 backgroundPosition: isResumeBg ? 'center' : 'center bottom',
                 backgroundRepeat: 'no-repeat',
                 opacity: backgroundImage === bgSrc ? 1 : 0,
+                visibility: backgroundImage === bgSrc ? 'visible' : 'hidden',
+                transition: 'opacity 500ms ease-in-out, visibility 500ms ease-in-out',
+                willChange: 'opacity, visibility',
                 pointerEvents: 'none',
               }}
             />
