@@ -1,5 +1,5 @@
 import { useRef, useEffect, useLayoutEffect, useState, Suspense } from 'react';
-import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
+import { HashRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
 import styles from './style';
 import './index.css';
 

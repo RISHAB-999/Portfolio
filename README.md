@@ -46,6 +46,15 @@ npm run dev
 
 For additional build and preview commands, check out [documentation/run.md](documentation/run.md).
 
+### ✉️ EmailJS Configuration
+To enable the Contact form, you need to create a `.env` file in the root directory (this file is ignored by Git). Add your EmailJS credentials:
+```env
+VITE_EMAILJS_SERVICE_ID=your_service_id
+VITE_EMAILJS_TEMPLATE_ID=your_template_id
+VITE_EMAILJS_PUBLIC_KEY=your_public_key
+```
+*Note: If you are deploying via GitHub Actions, you must also add these three variables as **Repository Secrets** in your GitHub repository settings.*
+
 ---
 
 ## 📂 Project Architecture

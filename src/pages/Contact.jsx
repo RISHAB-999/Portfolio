@@ -104,22 +104,29 @@ const Contact = () => {
       form.current.title.value = `New message from ${nameVal}`;
     }
 
-    emailjs
-      .sendForm(emailConfig.serviceId, emailConfig.templateId, form.current, emailConfig.publicKey)
-      .then(
-        (result) => {
-          console.log(result.text);
-          document.body.classList.remove('cursor-loading');
-          setIsSubmitted(true); // Show the success modal
-          setIsFailed(false);
-        },
-        (error) => {
-          console.error(error.text);
-          document.body.classList.remove('cursor-loading');
-          setIsFailed(true); // Show the failure modal
-          setIsSubmitted(false);
-        }
-      );
+    try {
+      emailjs
+        .sendForm(emailConfig.serviceId, emailConfig.templateId, form.current, emailConfig.publicKey)
+        .then(
+          (result) => {
+            console.log(result.text);
+            document.body.classList.remove('cursor-loading');
+            setIsSubmitted(true); // Show the success modal
+            setIsFailed(false);
+          },
+          (error) => {
+            console.error(error.text);
+            document.body.classList.remove('cursor-loading');
+            setIsFailed(true); // Show the failure modal
+            setIsSubmitted(false);
+          }
+        );
+    } catch (error) {
+      console.error("EmailJS Error:", error);
+      document.body.classList.remove('cursor-loading');
+      setIsFailed(true);
+      setIsSubmitted(false);
+    }
   };
 
   const handleModalClose = () => {
