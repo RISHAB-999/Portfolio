@@ -134,7 +134,7 @@ const AppContent = () => {
     const startY = window.scrollY;
     if (startY === 0) return;
 
-    const duration = 1200;
+    const duration = 400;
     let startTime = null;
 
     const animateScroll = (timestamp) => {
@@ -301,6 +301,8 @@ const AppContent = () => {
         </div>
       )}
 
+      <Navbar />
+
       {/* Floating GIF — fixed so it stays visible on all pages including Resume */}
       <div
         style={{
@@ -350,9 +352,9 @@ const AppContent = () => {
           />
         )}
         
-        {/* Navbar */}
+        {/* Sky gradient & stars */}
         <div
-          className={[styles.flexCenter, 'flex-shrink-0 relative'].join(' ')}
+          className={[styles.flexCenter, 'flex-shrink-0 relative w-full h-[100px]'].join(' ')}
           style={{
             zIndex: 10,
             // Translucent header block that fades out at the bottom so the nav
@@ -380,10 +382,6 @@ const AppContent = () => {
                 }}
               />
             ))}
-          </div>
-
-          <div className={[styles.boxWidth, 'mb-3 relative'].join(' ')} style={{ zIndex: 2 }}>
-            <Navbar />
           </div>
         </div>
 

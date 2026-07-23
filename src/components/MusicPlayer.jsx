@@ -4,7 +4,10 @@ import { motion, AnimatePresence } from 'framer-motion';
 
 import musicOnIcon from '../assets/music on.png';
 import musicOffIcon from '../assets/music_off.png';
+import playIcon from '../assets/play.png';
+import pauseIcon from '../assets/pause.png';
 import MusicCard from './MusicCard';
+import LiquidGlassFilter from './LiquidGlassFilter';
 import { playlist } from './playlistData';
 
 const waveformBars = [
@@ -50,6 +53,7 @@ const MusicPlayer = ({ embedded = false }) => {
   const [tilt, setTilt] = useState({ rotateX: 0, rotateY: 0 });
   const [isHovered, setIsHovered] = useState(false);
   const audioRef = useRef(null);
+  const capsuleRef = useRef(null);
 
   // Monitor document.body for pause-menu-open class (mobile hamburger menu)
   useEffect(() => {
@@ -257,7 +261,10 @@ const MusicPlayer = ({ embedded = false }) => {
             isMobileNav={isMobileNav}
           />
         ) : (
+          <>
+          <LiquidGlassFilter id="capsule-glass" targetRef={capsuleRef} options={{ blur: 0.5, refractionScale: 1.5, radius: 20 }} />
           <motion.div
+            ref={capsuleRef}
             key="music-capsule"
             layout="size"
             animate={{
@@ -273,8 +280,8 @@ const MusicPlayer = ({ embedded = false }) => {
               setMousePos({ x: -999, y: -999 });
               setTilt({ rotateX: 0, rotateY: 0 });
             }}
-            style={{ transformOrigin: cardOrigin }}
-            className={`relative flex items-center gap-1.5 h-10 liquid-glass overflow-hidden pointer-events-auto ${
+            style={{ transformOrigin: cardOrigin, '--svg-glass-url': 'url(#capsule-glass)' }}
+            className={`relative flex items-center gap-1.5 h-10 liquid-glass use-svg-glass overflow-hidden pointer-events-auto ${
               isPlaying
                 ? 'pl-2.5 pr-3.5 !rounded-full'
                 : 'w-10 justify-center !rounded-full'
@@ -305,7 +312,7 @@ const MusicPlayer = ({ embedded = false }) => {
             >
               <img
                 src={isPlaying ? musicOnIcon : musicOffIcon}
-                alt="Music Icon"
+                alt={isPlaying ? 'Pause Music' : 'Play Music'}
                 className="h-6 w-6 object-contain pointer-events-none"
               />
             </motion.button>
@@ -366,6 +373,7 @@ const MusicPlayer = ({ embedded = false }) => {
             )}
           </AnimatePresence>
         </motion.div>
+        </>
       )}
     </AnimatePresence>
 

@@ -1,10 +1,11 @@
 import { useNavigate, useLocation } from 'react-router-dom';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 
 import { close, menu } from '../assets';
 import { brand, navLinks, socialMedia } from '../data/siteConfig';
+import LiquidGlassFilter from './LiquidGlassFilter';
 
 const linkVariants = {
   hover: {
@@ -31,8 +32,37 @@ const itemVariants = {
 
 const Navbar = () => {
   const [toggle, setToggle] = useState(false);
+  const [scrolled, setScrolled] = useState(false);
+  const [active, setActive] = useState('');
+  const [mousePos, setMousePos] = useState({ x: -999, y: -999 });
+  const [isHovered, setIsHovered] = useState(false);
+  const [showNavbar, setShowNavbar] = useState(true);
   const navigate = useNavigate();
   const location = useLocation();
+  const navRef = useRef(null);
+  const lastScrollY = useRef(0);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      const currentScrollY = window.scrollY;
+      
+      if (currentScrollY > lastScrollY.current && currentScrollY > 50) {
+        setShowNavbar(false);
+      } else {
+        setShowNavbar(true);
+      }
+      
+      lastScrollY.current = currentScrollY;
+    };
+
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
+  const handleMouseMove = (e) => {
+    const rect = e.currentTarget.getBoundingClientRect();
+    setMousePos({ x: e.clientX - rect.left, y: e.clientY - rect.top });
+  };
 
   // Mark the current route's row with the ▸ cursor. '/' and '/home' both map to "home".
   const currentId = location.pathname === '/' ? 'home' : location.pathname.replace(/^\//, '');
@@ -97,8 +127,39 @@ const Navbar = () => {
   }, [toggle]);
 
   return (
-    <div className="w-full flex justify-center pt-3 pb-1 px-4 relative z-50 pointer-events-auto">
-      <nav className="glass-card w-[min(94vw,700px)] h-11 sm:h-13 flex items-center justify-between px-6 sm:px-10 !rounded-full transition-all mx-auto relative !overflow-visible">
+    <>
+      <div className={`fixed top-0 left-0 w-full flex justify-center pt-3 pb-1 px-4 z-50 pointer-events-none transition-transform duration-300 ${showNavbar ? 'translate-y-0' : '-translate-y-[150%]'}`}>
+      <LiquidGlassFilter id="navbar-glass" targetRef={navRef} options={{ blur: 0.5, refractionScale: 1.5, radius: 22 }} />
+      <nav
+        ref={navRef}
+        onMouseMove={handleMouseMove}
+        onMouseEnter={() => setIsHovered(true)}
+        onMouseLeave={() => {
+          setIsHovered(false);
+          setMousePos({ x: -999, y: -999 });
+        }}
+        style={{ '--svg-glass-url': 'url(#navbar-glass)' }}
+        className="glass-card use-svg-glass w-[min(94vw,700px)] h-11 sm:h-13 flex items-center justify-between px-6 sm:px-10 !rounded-full transition-all mx-auto relative pointer-events-auto !overflow-hidden sm:!overflow-visible"
+      >
+        {/* Dynamic Hover Glow Effect */}
+        <AnimatePresence>
+          {isHovered && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="absolute inset-0 pointer-events-none z-0 overflow-hidden !rounded-full"
+            >
+              <div
+                className="absolute inset-0"
+                style={{
+                  background: `radial-gradient(100px circle at ${mousePos.x}px ${mousePos.y}px, rgba(92,225,230,0.35), transparent 85%)`,
+                }}
+              />
+            </motion.div>
+          )}
+        </AnimatePresence>
+
         {/* Brand Logo directly inside navbar (pops cleanly out over top/bottom of slim card) */}
         <motion.div
           whileHover={{ scale: 1.3, y: -1 }}
@@ -257,7 +318,8 @@ const Navbar = () => {
           document.body
         )}
       </nav>
-    </div>
+      </div>
+    </>
   );
 };
 

@@ -5,6 +5,14 @@ import musicOffIcon from '../assets/music_off.png';
 import kirbyGif from '../assets/kirby.gif';
 import { playlist } from './playlistData';
 
+import playIcon from '../assets/play.png';
+import pauseIcon from '../assets/pause.png';
+import previousIcon from '../assets/Previous.png';
+import nextIcon from '../assets/Next.png';
+import soundIcon from '../assets/Sound.png';
+
+import LiquidGlassFilter from './LiquidGlassFilter';
+
 const MusicCard = ({
   isPlaying,
   volume,
@@ -47,7 +55,9 @@ const MusicCard = ({
   }, [onClose]);
 
   const handleStopAndClose = (e) => {
-    toggleMusic(e);
+    if (isPlaying) {
+      toggleMusic(e);
+    }
     onClose();
   };
 
@@ -59,16 +69,18 @@ const MusicCard = ({
   };
 
   return (
+    <>
+    <LiquidGlassFilter id="music-glass" targetRef={cardRef} options={{ blur: 0.5, refractionScale: 1.5, radius: 20 }} />
     <motion.div
       ref={cardRef}
       initial={{ opacity: 0, scale: 0.92 }}
       animate={{ opacity: 1, scale: 1 }}
       exit={{ opacity: 0, scale: 0.95 }}
       transition={{ duration: 0.12, ease: 'easeOut' }}
-      style={{ transformOrigin: isMobileNav ? 'bottom center' : 'top left' }}
+      style={{ transformOrigin: isMobileNav ? 'bottom center' : 'top left', '--svg-glass-url': 'url(#music-glass)' }}
       className={`relative w-[min(92vw,310px)] ${
         isMobileNav ? 'p-2.5 text-xs' : 'p-3.5 sm:p-4'
-      } liquid-glass text-white overflow-hidden pointer-events-auto mx-auto`}
+      } liquid-glass use-svg-glass text-white overflow-hidden pointer-events-auto mx-auto`}
     >
       {/* Ambient Shimmer */}
       <div className="absolute -top-20 -right-20 w-44 h-44 bg-[#5ce1e6]/20 rounded-full blur-3xl pointer-events-none" />
@@ -202,7 +214,7 @@ const MusicCard = ({
             title="Previous Track"
             className="w-7 h-7 flex items-center justify-center rounded-xl liquid-glass text-white hover:text-[#5ce1e6] cursor-pointer text-[10px] font-bold transition-all"
           >
-            ⏮
+            <img src={previousIcon} alt="Previous" className="w-3.5 h-3.5 object-contain" />
           </motion.button>
 
           <motion.button
@@ -212,11 +224,11 @@ const MusicCard = ({
             title={isPlaying ? 'Pause' : 'Play'}
             className={`w-8 h-8 flex items-center justify-center rounded-full backdrop-blur-md cursor-pointer text-xs font-bold transition-all ${
               isPlaying
-                ? 'bg-gradient-to-br from-[#5ce1e6]/90 via-cyan-400/90 to-cyan-500/90 text-black border-t border-l border-white border-b border-r border-cyan-300 shadow-[0_4px_12px_rgba(92,225,230,0.7),0_0_15px_rgba(92,225,230,0.6),inset_0_1.5px_3px_rgba(255,255,255,0.9)]'
+                ? 'bg-black/20 border border-[#5ce1e6]/40 shadow-[0_0_12px_rgba(92,225,230,0.3),inset_0_0_8px_rgba(92,225,230,0.2)]'
                 : 'liquid-glass text-[#5ce1e6] hover:text-white'
             }`}
           >
-            {isPlaying ? '⏸' : '▶'}
+            <img src={isPlaying ? playIcon : pauseIcon} alt={isPlaying ? 'Pause' : 'Play'} className={`w-4 h-4 object-contain ${!isPlaying && 'ml-0.5'}`} />
           </motion.button>
 
           <motion.button
@@ -226,7 +238,7 @@ const MusicCard = ({
             title="Next Track"
             className="w-7 h-7 flex items-center justify-center rounded-xl liquid-glass text-white hover:text-[#5ce1e6] cursor-pointer text-[10px] font-bold transition-all"
           >
-            ⏭
+            <img src={nextIcon} alt="Next" className="w-3.5 h-3.5 object-contain" />
           </motion.button>
         </div>
 
@@ -239,7 +251,7 @@ const MusicCard = ({
                 animate={{ opacity: 1, width: 'auto' }}
                 exit={{ opacity: 0, width: 0 }}
                 transition={{ type: 'spring', stiffness: 400, damping: 30 }}
-                className="flex items-center gap-1 overflow-hidden"
+                className="flex items-center gap-1 overflow-hidden py-3 -my-3"
               >
                 <input
                   type="range"
@@ -264,11 +276,12 @@ const MusicCard = ({
             title={showVolumeSlider ? 'Close Volume Slider' : 'Open Volume Slider'}
             className="w-7 h-7 rounded-xl backdrop-blur-md bg-cyan-400/15 hover:bg-cyan-400/30 border-t border-l border-[#5ce1e6]/90 border-b border-r border-[#5ce1e6]/30 text-[#5ce1e6] hover:text-white shadow-[0_2px_8px_rgba(0,0,0,0.4),0_0_8px_rgba(92,225,230,0.3),inset_0_1px_2px_rgba(255,255,255,0.6)] transition-all cursor-pointer text-[10px] flex items-center justify-center flex-shrink-0"
           >
-            {volume === 0 ? '🔇' : '🔊'}
+            <img src={soundIcon} alt="Sound" className={`w-3.5 h-3.5 object-contain ${volume === 0 ? 'opacity-40 grayscale' : ''}`} />
           </motion.button>
         </div>
       </div>
     </motion.div>
+    </>
   );
 };
 
