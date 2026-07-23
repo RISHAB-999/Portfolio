@@ -32,8 +32,7 @@ const itemVariants = {
 
 const Navbar = () => {
   const [toggle, setToggle] = useState(false);
-  const [scrolled, setScrolled] = useState(false);
-  const [active, setActive] = useState('');
+
   const [mousePos, setMousePos] = useState({ x: -999, y: -999 });
   const [isHovered, setIsHovered] = useState(false);
   const [showNavbar, setShowNavbar] = useState(true);

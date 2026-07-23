@@ -43,6 +43,12 @@ const headerStars = [
   { left: '94%', top: '50%', size: 2, dur: '3.3s', delay: '0.8s', color: '#cdebff' },
 ];
 
+// Gather all unique background images from the config to pre-render them
+const uniqueBackgrounds = [...new Set([
+  ...Object.values(pageConfig).map(cfg => cfg.background).filter(Boolean),
+  DEFAULT_PAGE.background
+])];
+
 const AppContent = () => {
 
   const location = useLocation();
@@ -334,23 +340,29 @@ const AppContent = () => {
       )}
 
       <div className={`${isResumePage ? 'bg-transparent' : 'bg-primary'} min-h-screen w-full flex flex-col relative`}>
-        {/* Main Content Background */}
-        { !isResumePage && (
-          <div
-            className={['absolute inset-x-0 top-0 bottom-[120px] sm:bottom-[88px]', styles.paddingX, 'flex flex-col'].join(' ')}
-            style={{
-              backgroundImage: `url(${backgroundImage})`,
-              backgroundSize: 'cover',
-              // Anchor the scene to its bottom and stop it around the grass line so the
-              // forest at the image's bottom edge sits on the grass instead of being
-              // cut by — and buried behind — the dirt strip. The slight overlap into
-              // the grass keeps foliage behind the grass blades' transparent gaps.
-              backgroundPosition: 'center bottom',
-              backgroundRepeat: 'no-repeat',
-              zIndex: 0,
-            }}
-          />
-        )}
+        {/* Main Content Background layers (Pre-rendered for zero-lag transitions) */}
+        {uniqueBackgrounds.map((bgSrc, idx) => {
+          const isResumeBg = bgSrc === pageConfig['/resume']?.background;
+          
+          return (
+            <div
+              key={idx}
+              className={
+                isResumeBg
+                  ? 'fixed inset-0 z-0 transition-opacity duration-500 ease-in-out'
+                  : `absolute inset-x-0 top-0 bottom-[120px] sm:bottom-[88px] ${styles.paddingX} flex flex-col z-0 transition-opacity duration-500 ease-in-out`
+              }
+              style={{
+                backgroundImage: `url(${bgSrc})`,
+                backgroundSize: 'cover',
+                backgroundPosition: isResumeBg ? 'center' : 'center bottom',
+                backgroundRepeat: 'no-repeat',
+                opacity: backgroundImage === bgSrc ? 1 : 0,
+                pointerEvents: 'none',
+              }}
+            />
+          );
+        })}
         
         {/* Sky gradient & stars */}
         <div

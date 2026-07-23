@@ -4,8 +4,6 @@ import { motion, AnimatePresence } from 'framer-motion';
 
 import musicOnIcon from '../assets/music on.png';
 import musicOffIcon from '../assets/music_off.png';
-import playIcon from '../assets/play.png';
-import pauseIcon from '../assets/pause.png';
 import MusicCard from './MusicCard';
 import LiquidGlassFilter from './LiquidGlassFilter';
 import { playlist } from './playlistData';
@@ -195,7 +193,7 @@ const MusicPlayer = ({ embedded = false }) => {
       removeInteractionListeners();
       audio.pause();
     };
-  }, [changeTrack]);
+  }, [changeTrack, volume]);
 
   const toggleMusic = (e) => {
     e?.stopPropagation();

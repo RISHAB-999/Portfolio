@@ -29,7 +29,6 @@ const MusicCard = ({
   const [showPlaylist, setShowPlaylist] = useState(false);
   const [showVolumeSlider, setShowVolumeSlider] = useState(false);
   const currentTrack = playlist[currentTrackIndex] || playlist[0];
-  const autoCloseTimerRef = useRef(null);
   const cardRef = useRef(null);
 
   // Click Outside to Minimize/Close Card
@@ -154,7 +153,7 @@ const MusicCard = ({
             initial={{ opacity: 0, height: 0 }}
             animate={{ opacity: 1, height: 'auto' }}
             exit={{ opacity: 0, height: 0 }}
-            className="flex flex-col gap-1 max-h-32 overflow-y-auto mb-2 pr-1 bg-black/40 p-1.5 rounded-2xl border border-[#5ce1e6]/30 custom-scrollbar"
+            className="flex flex-col gap-1 max-h-32 overflow-y-auto mb-2 pr-1 bg-black/40 p-1.5 rounded-2xl border border-[#5ce1e6]/30 no-scrollbar"
           >
             <span className="text-[9px] font-bold text-[#5ce1e6] uppercase tracking-wider mb-0.5 px-1">
               Select Song ({playlist.length})

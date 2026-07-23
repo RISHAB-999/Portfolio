@@ -8,7 +8,6 @@ import ScrollLink from '../components/ScrollLink';
 import { contactInfo, socialMedia } from '../data/siteConfig';
 import { email as emailIcon } from '../assets';
 import grassImg from '../assets/grass3.png';
-import pixelCity from '../assets/pixel-city3.gif';
 import resumePdf from '../assets/resume.pdf';
 import profilePic from '../assets/Rishab.jpeg';
 
@@ -106,20 +105,10 @@ const Resume = () => {
 
     timer = setTimeout(handleTyping, isDeleting ? 50 : 100);
     return () => clearTimeout(timer);
-  }, [currentText, isDeleting, currentRoleIndex]);
+  }, [currentText, isDeleting, currentRoleIndex, roles]);
 
   return (
     <div className="relative min-h-screen flex flex-col">
-      {/* Waterfall forest background */}
-      <div
-        className="fixed inset-0 z-0"
-        style={{
-          backgroundImage: `url(${pixelCity})`,
-          backgroundSize: 'cover',
-          backgroundPosition: 'center',
-          backgroundRepeat: 'no-repeat',
-        }}
-      />
       {/* Dark veil */}
       <div className="fixed inset-0 z-[1] bg-[#06080e]/80" />
       {/* Scanline overlay */}
@@ -144,7 +133,7 @@ const Resume = () => {
                 SUBJECT PROFILE
               </h1>
               <p className="font-source-code-pro text-sm text-[#5ce1e6]/60 mt-1.5 uppercase tracking-widest">
-                // SYSTEM_DATABASE: IDENT_RECORD
+                {'// SYSTEM_DATABASE: IDENT_RECORD'}
               </p>
             </div>
 
@@ -268,7 +257,7 @@ const Resume = () => {
                     OPEN TO WORK
                   </div>
                   <div className="font-source-code-pro text-[10px] text-white/45 flex justify-between mt-2.5 tracking-wider uppercase border-t border-white/5 pt-2">
-                    <span>// CONTRACTS: OK</span>
+                    <span>{'// CONTRACTS: OK'}</span>
                     <span>[REMOTE_READY]</span>
                   </div>
                 </motion.div>
@@ -291,7 +280,7 @@ const Resume = () => {
               className="lg:col-span-6 border border-white/10 bg-[#0b0f1f]/35 p-8 rounded-2xl backdrop-blur-sm"
             >
               <div className="flex justify-between items-center font-source-code-pro text-sm tracking-wider mb-6 pb-4 border-b border-white/5">
-                <span className="text-[#5ce1e6] font-semibold">// COMPETENCE_ANALYSIS_REPORT</span>
+                <span className="text-[#5ce1e6] font-semibold">{'// COMPETENCE_ANALYSIS_REPORT'}</span>
                 <span className="text-white/45">[READ_ONLY]</span>
               </div>
 
@@ -310,7 +299,7 @@ const Resume = () => {
 
               {/* Education section */}
               <div className="mb-5 mt-10 font-source-code-pro text-sm text-[#5ce1e6]/70 uppercase tracking-widest font-bold">
-                // ACADEMIC_LOG [EDUCATION]
+                {'// ACADEMIC_LOG [EDUCATION]'}
               </div>
               <div className="space-y-6">
                 {resumeData.education.map((e, i) => (
@@ -335,7 +324,7 @@ const Resume = () => {
 
               {/* Experience section */}
               <div className="mb-5 mt-10 font-source-code-pro text-sm text-[#5ce1e6]/70 uppercase tracking-widest font-bold">
-                // FIELD_OPERATIONS [EXPERIENCE]
+                {'// FIELD_OPERATIONS [EXPERIENCE]'}
               </div>
               <div className="space-y-8">
                 {resumeData.experience.map((e, i) => (
@@ -365,7 +354,7 @@ const Resume = () => {
 
               {/* Certifications section */}
               <div className="mb-5 mt-10 font-source-code-pro text-sm text-[#5ce1e6]/70 uppercase tracking-widest font-bold">
-                // VERIFIED_CREDENTIALS [CERTIFICATIONS]
+                {'// VERIFIED_CREDENTIALS [CERTIFICATIONS]'}
               </div>
               <div className="space-y-6">
                 {resumeData.certifications.map((c, i) => (
@@ -407,7 +396,7 @@ const Resume = () => {
 
               {/* Hard Skills */}
               <div className="font-source-code-pro text-xs text-[#5ce1e6] tracking-[0.2em] uppercase font-bold mb-4">
-                // HARD_SKILLS
+                {'// HARD_SKILLS'}
               </div>
               <div className="grid grid-cols-2 gap-2 mb-8">
                 {/* Dynamically split skills into tags */}
@@ -437,7 +426,7 @@ const Resume = () => {
 
               {/* Soft Skills */}
               <div className="font-source-code-pro text-xs text-[#5ce1e6] tracking-[0.2em] uppercase font-bold mb-4">
-                // SOFT_SKILLS
+                {'// SOFT_SKILLS'}
               </div>
               <div className="grid grid-cols-1 gap-2 mb-8">
                 {['Problem Solving', 'Data Structures', 'Algorithms', 'OOP Design', 'System Design'].map((skill) => (

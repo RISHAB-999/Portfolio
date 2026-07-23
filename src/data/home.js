@@ -6,7 +6,7 @@ import mobileApp from '../assets/Mobile_app.png';
 import cloudDevOps from '../assets/Cloud.png';
 import softwareEngineering from '../assets/Software_Engineering.png';
 
-import postgresql from '../assets/TechLogos/Postgresql.png';
+
 import c from '../assets/TechLogos/c.png';
 import cpp from '../assets/TechLogos/cpp.png';
 import css from '../assets/TechLogos/css.png';
