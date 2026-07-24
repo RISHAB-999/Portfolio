@@ -193,7 +193,7 @@ const MusicPlayer = ({ embedded = false }) => {
       removeInteractionListeners();
       audio.pause();
     };
-  }, [changeTrack, volume]);
+  }, [changeTrack]);
 
   const toggleMusic = (e) => {
     e?.stopPropagation();
