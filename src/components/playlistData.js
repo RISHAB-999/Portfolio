@@ -21,7 +21,7 @@ import slipArt from '../assets/song&wallpaper/Slip.jpg';
 
 export const playlist = [
   { id: 0, title: 'Slip', tag: 'Elliot Moss', src: slipTrack, cover: slipArt },
-  { id: 1, title: 'Lofi Chill Beats', tag: 'Lofi Ambient', src: lofiTrack, cover: pixelCityArt },
+  { id: 1, title: 'Lofi Chill Beats', tag: 'Lofi Ambient', src: lofiProdTrack, cover: pixelCityArt },
   { id: 2, title: 'Calm Atmosphere', tag: 'Peaceful Beats', src: calmTrack, cover: calmArt },
   { id: 3, title: 'Calm Background', tag: 'Soft Melodies', src: calmBgTrack, cover: calmBgArt },
   { id: 4, title: 'Made It Lower', tag: 'Carpetman', src: carpetmanTrack, cover: carpetmanArt },

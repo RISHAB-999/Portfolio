@@ -550,8 +550,12 @@ const AppContent = () => {
           </div>
         </div>
       )}
-      {/* Mobile music player — only visible when mobile menu is open */}
-      {isMobile && <MusicPlayer />}
+      {/* Mobile music player — only visible when mobile menu is open? Actually we want to hide it when the pause menu is open! */}
+      {isMobile && (
+        <div className="md:hidden mobile-music-player">
+          <MusicPlayer />
+        </div>
+      )}
     </div>
   );
 };

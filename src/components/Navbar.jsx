@@ -127,7 +127,8 @@ const Navbar = () => {
 
   return (
     <>
-      <div className={`fixed top-0 left-0 w-full flex justify-center pt-3 pb-1 px-4 z-50 pointer-events-none transition-transform duration-300 ${showNavbar ? 'translate-y-0' : '-translate-y-[150%]'}`}>
+      <div className={`fixed top-0 left-0 w-full flex justify-center pt-3 pb-1 px-4 z-50 pointer-events-none transition-transform duration-300 ${showNavbar && !toggle ? 'translate-y-0' : '-translate-y-[150%]'}`}>
+        <LiquidGlassFilter id="navbar-glass" targetRef={navRef} options={{ fps: 60, refractionScale: 0.1 }} />
       <motion.nav
         ref={navRef}
         onMouseMove={handleMouseMove}
@@ -213,7 +214,7 @@ const Navbar = () => {
           <AnimatePresence>
             {toggle && (
               <motion.div
-                className="pause-menu fixed inset-0 z-[100] flex items-center justify-center overflow-y-auto p-4"
+                className="pause-menu fixed inset-0 z-[100] flex items-center justify-center overflow-y-auto p-4 backdrop-blur-md bg-black/40"
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}

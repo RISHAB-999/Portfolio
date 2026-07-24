@@ -69,16 +69,17 @@ const MusicCard = ({
 
   return (
     <>
+      <LiquidGlassFilter id="music-card-glass" targetRef={cardRef} options={{ fps: 60, refractionScale: 0.2 }} />
     <motion.div
       ref={cardRef}
       initial={{ opacity: 0, scale: 0.92 }}
       animate={{ opacity: 1, scale: 1 }}
       exit={{ opacity: 0, scale: 0.95 }}
       transition={{ duration: 0.12, ease: 'easeOut' }}
-      style={{ transformOrigin: isMobileNav ? 'bottom center' : 'top left' }}
+      style={{ transformOrigin: isMobileNav ? 'bottom center' : 'top left', '--svg-glass-url': 'url(#music-card-glass)' }}
       className={`relative w-[min(92vw,310px)] ${
         isMobileNav ? 'p-2.5 text-xs' : 'p-3.5 sm:p-4'
-      } liquid-glass text-white overflow-hidden pointer-events-auto mx-auto`}
+      } use-svg-glass liquid-glass text-white overflow-hidden pointer-events-auto mx-auto`}
     >
       {/* Ambient Shimmer */}
       <div className="absolute -top-20 -right-20 w-44 h-44 bg-[#5ce1e6]/20 rounded-full blur-3xl pointer-events-none" />
@@ -198,6 +199,7 @@ const MusicCard = ({
           value={currentTime}
           onChange={handleSeek}
           className="liquid-slider"
+          style={{ '--slider-progress': `${(currentTime / (duration || 1)) * 100}%` }}
         />
       </div>
 
@@ -259,6 +261,7 @@ const MusicCard = ({
                   value={volume}
                   onChange={handleVolumeChange}
                   className="liquid-slider w-12 sm:w-16"
+                  style={{ '--slider-progress': `${volume * 100}%` }}
                 />
                 <span className="text-[10px] text-[#5ce1e6] font-source-code-pro font-semibold flex-shrink-0">
                   {Math.round(volume * 100)}%

@@ -259,30 +259,32 @@ const MusicPlayer = ({ embedded = false }) => {
             isMobileNav={isMobileNav}
           />
         ) : (
-          <motion.div
-            ref={capsuleRef}
-            key="music-capsule"
-            layout="size"
-            animate={{
-              scale: isHovered && enableRepulsion ? 1.06 : 1,
-              rotateX: isHovered && enableRepulsion ? tilt.rotateX : 0,
-              rotateY: isHovered && enableRepulsion ? tilt.rotateY : 0,
-            }}
-            transition={{ layout: { type: 'spring', stiffness: 400, damping: 35 }, duration: 0.2, ease: 'easeOut' }}
-            onMouseMove={handleMouseMove}
-            onMouseEnter={() => { if (enableRepulsion) setIsHovered(true); }}
-            onMouseLeave={() => {
-              setIsHovered(false);
-              setMousePos({ x: -999, y: -999 });
-              setTilt({ rotateX: 0, rotateY: 0 });
-            }}
-            style={{ transformOrigin: cardOrigin }}
-            className={`relative flex items-center gap-1.5 h-10 liquid-glass overflow-hidden pointer-events-auto ${
-              isPlaying
-                ? 'pl-2.5 pr-3.5 !rounded-full'
-                : 'w-10 justify-center !rounded-full'
-            }`}
-          >
+          <>
+            <LiquidGlassFilter id="music-player-glass" targetRef={capsuleRef} options={{ fps: 30 }} />
+            <motion.div
+              ref={capsuleRef}
+              key="music-capsule"
+              layout="size"
+              animate={{
+                scale: isHovered && enableRepulsion ? 1.06 : 1,
+                rotateX: isHovered && enableRepulsion ? tilt.rotateX : 0,
+                rotateY: isHovered && enableRepulsion ? tilt.rotateY : 0,
+              }}
+              transition={{ layout: { type: 'spring', stiffness: 400, damping: 35 }, duration: 0.2, ease: 'easeOut' }}
+              onMouseMove={handleMouseMove}
+              onMouseEnter={() => { if (enableRepulsion) setIsHovered(true); }}
+              onMouseLeave={() => {
+                setIsHovered(false);
+                setMousePos({ x: -999, y: -999 });
+                setTilt({ rotateX: 0, rotateY: 0 });
+              }}
+              style={{ transformOrigin: cardOrigin, '--svg-glass-url': 'url(#music-player-glass)' }}
+              className={`relative flex items-center gap-1.5 h-10 use-svg-glass liquid-glass overflow-hidden pointer-events-auto ${
+                isPlaying
+                  ? 'pl-2.5 pr-3.5 !rounded-full'
+                  : 'w-10 justify-center !rounded-full'
+              }`}
+            >
             {isHovered && enableRepulsion && (
               <div
                 className="absolute inset-0 pointer-events-none z-10"
@@ -369,6 +371,7 @@ const MusicPlayer = ({ embedded = false }) => {
             )}
           </AnimatePresence>
         </motion.div>
+          </>
         )}
     </AnimatePresence>
 
