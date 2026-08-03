@@ -82,8 +82,13 @@ const LiquidGlassFilter = ({ id, targetRef, options = {} }) => {
             result="specular_layer"
             preserveAspectRatio="none"
           />
-          <feComponentTransfer in="specular_layer" result="specular_faded">
-            <feFuncA type="linear" slope={options.specularOpacity || 1} />
+          <feGaussianBlur
+            in="specular_layer"
+            stdDeviation="1"
+            result="specular_smooth"
+          />
+          <feComponentTransfer in="specular_smooth" result="specular_faded">
+            <feFuncA type="linear" slope={options.specularOpacity || 0} />
           </feComponentTransfer>
           <feBlend in="specular_faded" in2="displaced_saturated" mode="screen" />
         </filter>

@@ -69,7 +69,7 @@ const MusicCard = ({
 
   return (
     <>
-      <LiquidGlassFilter id="music-card-glass" targetRef={cardRef} options={{ fps: 60, refractionScale: 0.2 }} />
+      <LiquidGlassFilter id="music-card-glass" targetRef={cardRef} options={{ fps: 60, refractionScale: 0.2, specularOpacity: 0 }} />
     <motion.div
       ref={cardRef}
       initial={{ opacity: 0, scale: 0.92 }}

@@ -124,10 +124,7 @@ export function calculateSpecularHighlight(
 ) {
   const imageData = new ImageData(objectWidth, objectHeight);
   const specularVector = [Math.cos(specularAngle), Math.sin(specularAngle)];
-  const specularThickness = Math.min(1.5, bezelWidth * 0.2);
-  const radiusSquared = radius * radius;
-  const radiusPlusOneSquared = (radius + 1) * (radius + 1);
-  const radiusMinusSpecularSquared = Math.max(0, (radius - specularThickness) * (radius - specularThickness));
+  const specularThickness = Math.max(3, bezelWidth * 0.15);
   const widthBetweenRadiuses = objectWidth - radius * 2;
   const heightBetweenRadiuses = objectHeight - radius * 2;
 
@@ -142,21 +139,17 @@ export function calculateSpecularHighlight(
       const x = isOnLeftSide ? x1 - radius : isOnRightSide ? x1 - radius - widthBetweenRadiuses : 0;
       const y = isOnTopSide ? y1 - radius : isOnBottomSide ? y1 - radius - heightBetweenRadiuses : 0;
 
-      const distanceToCenterSquared = x * x + y * y;
-      const isNearEdge = distanceToCenterSquared <= radiusPlusOneSquared && distanceToCenterSquared >= radiusMinusSpecularSquared;
+      const distanceToCenter = Math.sqrt(x * x + y * y);
+      const distFromEdge = Math.abs(distanceToCenter - radius);
 
-      if (isNearEdge) {
-        const distanceFromCenter = Math.sqrt(distanceToCenterSquared);
-        const distanceFromSide = radius - distanceFromCenter;
-        const opacity = distanceToCenterSquared < radiusSquared ? 1 : 1 - (distanceFromCenter - Math.sqrt(radiusSquared)) / (Math.sqrt(radiusPlusOneSquared) - Math.sqrt(radiusSquared));
-        const cos = distanceFromCenter > 0 ? x / distanceFromCenter : 0;
-        const sin = distanceFromCenter > 0 ? -y / distanceFromCenter : 0;
+      if (distFromEdge <= specularThickness) {
+        const falloff = Math.cos((distFromEdge / specularThickness) * (Math.PI / 2));
+        const cos = distanceToCenter > 0 ? x / distanceToCenter : 0;
+        const sin = distanceToCenter > 0 ? -y / distanceToCenter : 0;
         const dotProduct = Math.max(0, cos * specularVector[0] + sin * specularVector[1]);
-        const edgeRatio = Math.max(0, Math.min(1, distanceFromSide / specularThickness));
-        const sharpFalloff = Math.sqrt(1 - (1 - edgeRatio) * (1 - edgeRatio));
-        const coefficient = dotProduct * sharpFalloff;
+        const coefficient = dotProduct * falloff;
         const color = Math.min(255, 255 * coefficient);
-        const finalOpacity = Math.min(255, color * coefficient * opacity);
+        const finalOpacity = Math.min(255, color * coefficient);
 
         imageData.data[idx] = color;
         imageData.data[idx + 1] = color;
