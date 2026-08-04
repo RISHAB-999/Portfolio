@@ -75,8 +75,26 @@ const AppContent = () => {
           `X:\u00A0${String(e.clientX).padStart(4, '\u00A0')}\u00A0\u00A0Y:\u00A0${String(e.clientY).padStart(4, '\u00A0')}`;
       }
     };
+
+    let scrollTimeout;
+    const handleScroll = () => {
+      if (!document.body.classList.contains('is-scrolling')) {
+        document.body.classList.add('is-scrolling');
+      }
+      clearTimeout(scrollTimeout);
+      scrollTimeout = setTimeout(() => {
+        document.body.classList.remove('is-scrolling');
+      }, 150);
+    };
+
     window.addEventListener('mousemove', handleMove);
-    return () => window.removeEventListener('mousemove', handleMove);
+    window.addEventListener('scroll', handleScroll, { passive: true });
+
+    return () => {
+      window.removeEventListener('mousemove', handleMove);
+      window.removeEventListener('scroll', handleScroll);
+      clearTimeout(scrollTimeout);
+    };
   }, []);
 
   // Handle text selection state to change cursor to cursor2

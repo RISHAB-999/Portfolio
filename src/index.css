@@ -93,9 +93,18 @@
 }
 
 @supports (backdrop-filter: url(#test)) or (-webkit-backdrop-filter: url(#test)) {
-  .use-svg-glass {
-    backdrop-filter: var(--svg-glass-url) !important;
-    -webkit-backdrop-filter: var(--svg-glass-url) !important;
+  /* Only apply heavy SVG glass on desktop/laptop screens when static.
+     Touch/mobile devices and smaller screens use standard CSS blur. */
+  @media (min-width: 768px) and (hover: hover) {
+    .use-svg-glass {
+      backdrop-filter: var(--svg-glass-url) !important;
+      -webkit-backdrop-filter: var(--svg-glass-url) !important;
+    }
+    /* Temporarily downgrade to high-performance GPU-accelerated standard CSS blur during scrolling */
+    body.is-scrolling .use-svg-glass {
+      backdrop-filter: blur(14px) saturate(130%) !important;
+      -webkit-backdrop-filter: blur(14px) saturate(130%) !important;
+    }
   }
 }
 
