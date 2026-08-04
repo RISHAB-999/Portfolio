@@ -179,16 +179,20 @@ export function generateLiquidGlassAssets(width, height, options = {}) {
     radius = 30,
   } = options;
 
-  const w = Math.floor(Math.max(1, width));
-  const h = Math.floor(Math.max(1, height));
-  const r = Math.min(radius, w / 2, h / 2);
-
   const surfaceFn = SurfaceEquations[surfaceType] || SurfaceEquations.convex_squircle;
   const precomputed = calculateDisplacementMap1D(glassThickness, bezelWidth, surfaceFn, refractiveIndex);
   const maximumDisplacement = Math.max(...precomputed.map(Math.abs));
 
-  const displacementData = calculateDisplacementMap2D(w, h, w, h, r, bezelWidth, maximumDisplacement || 1, precomputed);
-  const specularData = calculateSpecularHighlight(w, h, r, bezelWidth);
+  // Downscale factor to optimize canvas generation and avoid rendering lag (16x speedup)
+  const scaleFactor = 0.25;
+
+  const w = Math.floor(Math.max(1, width * scaleFactor));
+  const h = Math.floor(Math.max(1, height * scaleFactor));
+  const r = Math.min(radius * scaleFactor, w / 2, h / 2);
+  const bWidth = bezelWidth * scaleFactor;
+
+  const displacementData = calculateDisplacementMap2D(w, h, w, h, r, bWidth, maximumDisplacement || 1, precomputed);
+  const specularData = calculateSpecularHighlight(w, h, r, bWidth);
 
   return {
     displacementUrl: imageDataToDataURL(displacementData),

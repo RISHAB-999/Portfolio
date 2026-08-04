@@ -6,31 +6,50 @@ const LiquidGlassFilter = ({ id, targetRef, options = {} }) => {
   const [dimensions, setDimensions] = useState({ width: 0, height: 0 });
   const timeoutRef = useRef(null);
 
+  const optionsKey = JSON.stringify(options);
+  const isFirstMount = useRef(true);
+
   useEffect(() => {
     if (!targetRef?.current) return;
+
+    const el = targetRef.current;
+    const initialWidth = el.offsetWidth;
+    const initialHeight = el.offsetHeight;
+    
+    // Generate initial filter assets synchronously so they are active on the very first frame
+    if (initialWidth > 0 && initialHeight > 0) {
+      setDimensions({ width: initialWidth, height: initialHeight });
+      const parsedOptions = JSON.parse(optionsKey);
+      setAssets(generateLiquidGlassAssets(initialWidth, initialHeight, parsedOptions));
+    }
 
     const observer = new ResizeObserver((entries) => {
       if (!entries[0]) return;
       
-      const el = targetRef.current;
-      if (!el) return;
+      // Skip the very first observer trigger since we already set the initial size synchronously
+      if (isFirstMount.current) {
+        isFirstMount.current = false;
+        return;
+      }
+      
       const width = el.offsetWidth;
       const height = el.offsetHeight;
       
       if (timeoutRef.current) clearTimeout(timeoutRef.current);
       timeoutRef.current = setTimeout(() => {
         setDimensions({ width, height });
-        const newAssets = generateLiquidGlassAssets(width, height, options);
+        const parsedOptions = JSON.parse(optionsKey);
+        const newAssets = generateLiquidGlassAssets(width, height, parsedOptions);
         setAssets(newAssets);
-      }, 50); // debounce resize
+      }, 250); // 250ms debounce to avoid running heavy canvas updates during scale/height animations
     });
 
-    observer.observe(targetRef.current);
+    observer.observe(el);
     return () => {
       observer.disconnect();
       if (timeoutRef.current) clearTimeout(timeoutRef.current);
     };
-  }, [targetRef, options]);
+  }, [targetRef, optionsKey]);
 
   if (!assets || dimensions.width === 0 || dimensions.height === 0) return null;
 
