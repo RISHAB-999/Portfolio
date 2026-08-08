@@ -105,17 +105,9 @@ const AppContent = () => {
     }
 
     const imagesToPreload = [
-      ...Object.values(pageConfig).map(cfg => cfg.background).filter(Boolean),
-      DEFAULT_PAGE.background,
       kirbyfloating,
       rocks,
       grass,
-      caveBG,
-      profilePic,
-      fullStackWeb,
-      mobileApp,
-      cloudDevOps,
-      softwareEngineering,
       cursor1,
       cursor2,
       cursor3,
