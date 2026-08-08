@@ -11,9 +11,10 @@ export default defineConfig({
     // Kirby mascot) and sharp would flatten them to a single frame.
     ViteImageOptimizer({
       test: /\.(jpe?g|png|svg|webp|avif|tiff)$/i,
-      png: { quality: 80 },
-      jpeg: { quality: 80 },
-      jpg: { quality: 80 },
+      png: { quality: 70 },
+      jpeg: { quality: 70 },
+      jpg: { quality: 70 },
+      webp: { quality: 70 },
     }),
   ],
   // Served from https://RISHAB-999.github.io/Portfolio/.

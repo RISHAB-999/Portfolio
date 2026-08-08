@@ -123,11 +123,15 @@ const MusicCard = ({
           <img
             src={currentTrack.cover}
             alt={currentTrack.title}
+            width="56"
+            height="56"
             className={`relative ${isMobileNav ? 'w-10 h-10' : 'w-14 h-14'} rounded-2xl object-cover border border-[#5ce1e6]/50 shadow-md group-hover:scale-105 transition-transform`}
           />
           <img
             src={kirbyGif}
             alt="Kirby"
+            width="20"
+            height="20"
             className="absolute -bottom-1 -right-1 w-4 h-4 sm:w-5 sm:h-5 drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]"
           />
           {/* Overlay indication */}

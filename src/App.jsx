@@ -322,6 +322,8 @@ const AppContent = () => {
           ref={kirbyRef}
           src={kirbyfloating}
           alt="Kirby Floating"
+          width="64"
+          height="64"
           decoding="async"
           style={{ position: 'absolute', willChange: 'left, top, transform' }}
           className="w-16 h-16"

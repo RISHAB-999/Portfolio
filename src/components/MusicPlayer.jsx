@@ -112,7 +112,7 @@ const MusicPlayer = ({ embedded = false }) => {
 
   useEffect(() => {
     const audio = new Audio(playlist[0].src);
-    audio.preload = 'auto';
+    audio.preload = 'none';
     audio.loop = false;
     audio.volume = volume;
     audioRef.current = audio;
@@ -130,8 +130,6 @@ const MusicPlayer = ({ embedded = false }) => {
     audio.addEventListener('timeupdate', handleTimeUpdate);
     audio.addEventListener('loadedmetadata', handleLoadedMetadata);
     audio.addEventListener('ended', handleEnded);
-
-    audio.load();
 
     let hasActivated = false;
 

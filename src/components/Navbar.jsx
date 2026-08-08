@@ -170,6 +170,8 @@ const Navbar = () => {
           <img
             src={brand.logo}
             alt={brand.alt}
+            width="48"
+            height="48"
             className="h-12 sm:h-15 max-w-none object-contain drop-shadow-[0_0_16px_rgba(92,225,230,0.9)] transition-all duration-200"
           />
         </motion.div>
@@ -204,6 +206,8 @@ const Navbar = () => {
             <img
               src={toggle ? close : menu}
               alt=""
+              width="24"
+              height="24"
               className="w-[24px] h-[24px] object-contain"
             />
           </button>
