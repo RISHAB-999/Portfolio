@@ -4,6 +4,7 @@ import ScrollLink from '../ScrollLink';
 import { motion } from 'framer-motion';
 import { featuredWork } from '../../data/homeShowcase';
 import { projectsCta } from '../../data/home';
+import ProjectAction from '../ProjectAction';
 
 // Selected work as a single-column list inside one framed panel — each project a
 // compact row: small thumbnail (with a play badge for video) on the left, title
@@ -24,7 +25,7 @@ const FeaturedWork = () => {
       </p>
       <h2 className="mb-6 text-3xl font-bold text-white sm:text-4xl pixel-shadow">Selected projects</h2>
 
-      <div className="overflow-hidden rounded-2xl border border-white/10 bg-[#0b0f1f]/50 backdrop-blur-sm">
+      <div className="relative rounded-2xl border border-white/10 bg-[#0b0f1f]/50 backdrop-blur-sm">
         {featuredWork.map((p) => {
           // Projects without a public link (e.g. coursework that can't be shared)
           // render as a non-clickable row with a muted "Private" tag instead of a link.
@@ -35,7 +36,7 @@ const FeaturedWork = () => {
               onMouseEnter={() => setActive(p)}
               onMouseMove={(e) => setPos({ x: e.clientX, y: e.clientY })}
               onMouseLeave={() => setActive((cur) => (cur === p ? null : cur))}
-              className="group flex flex-col sm:flex-row sm:items-center gap-4 border-b border-white/[0.07] px-4 py-4 transition-colors duration-200 last:border-b-0 hover:bg-[#5ce1e6]/[0.06] sm:px-5"
+              className="group relative flex flex-col sm:flex-row sm:items-center gap-4 border-b border-white/[0.07] px-4 py-4 transition-colors duration-200 last:border-b-0 hover:bg-[#5ce1e6]/[0.06] first:rounded-t-2xl last:rounded-b-2xl sm:px-5"
             >
               <div className="relative aspect-video w-28 flex-none overflow-hidden rounded-lg border border-white/10 sm:w-36">
                 <img
@@ -75,19 +76,7 @@ const FeaturedWork = () => {
               {/* Actions list - pinned right */}
               <div className="flex-none flex flex-wrap items-center gap-2 mt-2 sm:mt-0">
                 {p.actions?.filter((a) => a.label !== 'Code').map((a) => (
-                  <a
-                    key={a.label}
-                    href={a.href}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className={
-                      a.primary
-                        ? 'inline-flex items-center gap-1 rounded-lg bg-blue-gradient px-3 py-1.5 font-source-code-pro text-xs font-semibold text-black transition-transform duration-200 hover:scale-[1.03]'
-                        : 'inline-flex items-center gap-1 rounded-lg border border-[#5ce1e6]/40 px-3 py-1.5 font-source-code-pro text-xs font-semibold text-[#5ce1e6] transition-colors duration-200 hover:border-[#5ce1e6] hover:bg-[#5ce1e6]/10'
-                    }
-                  >
-                    {a.label} <span aria-hidden="true">↗</span>
-                  </a>
+                  <ProjectAction key={a.label} action={a} projectTitle={p.title} size="sm" />
                 ))}
               </div>
             </Wrapper>

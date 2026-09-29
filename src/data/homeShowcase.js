@@ -16,6 +16,7 @@ import brainMentors from '../assets/brain_mentors.png';
 import moonlitApp from '../assets/moonlit_app.jpg';
 import therapiqueApp from '../assets/therapique.png';
 import moonlitAppDemo from '../assets/moonlit_app_demo.mp4';
+import therapiqueDemo from '../assets/therapique_demo.mp4';
 
 // Experience — "My career so far" timeline.
 export const careerTimeline = [
@@ -94,13 +95,27 @@ export const featuredWork = [
     actions: [
       {
         label: 'Code',
-        href: 'https://github.com/RISHAB-999/Therapique',
+        href: 'https://github.com/RISHAB-999/Therapiques',
         primary: false,
       },
       {
         label: 'Live',
-        href: 'https://therapique-frontend.vercel.app',
+        href: 'https://therapique-frontend.vercel.app/',
         primary: true,
+        dropdown: [
+          {
+            label: 'Frontend',
+            href: 'https://therapique-frontend.vercel.app/',
+          },
+          {
+            label: 'Admin',
+            href: 'https://therapique-admin-omega.vercel.app',
+          },
+          {
+            label: 'Demo',
+            href: therapiqueDemo,
+          },
+        ],
       },
     ],
   },

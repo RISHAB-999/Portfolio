@@ -3,6 +3,7 @@ import { motion } from 'framer-motion';
 import { careerTimeline, featuredWork } from '../data/homeShowcase';
 import { pageFade } from '../utils/motion';
 import Bullet from '../components/Bullet';
+import ProjectAction from '../components/ProjectAction';
 
 // The Experience page is one transparent panel — a page header, the Work
 // Experience timeline (one card per role, hung off a connecting line), and
@@ -229,11 +230,11 @@ const Experience = () => {
           {featuredWork.map((p) => (
             <article
               key={p.id}
-              className={`overflow-hidden ${CARD} transition-all duration-200 hover:border-[#5ce1e6]/40 group-hover/builds:opacity-40 hover:!opacity-100`}
+              className={`relative ${CARD} transition-all duration-200 hover:border-[#5ce1e6]/40 group-hover/builds:opacity-40 hover:!opacity-100 hover:z-20`}
             >
               <div className="flex flex-col md:flex-row">
                 {/* Preview (left) */}
-                <div className="relative md:w-[45%] lg:w-[48%]">
+                <div className="relative md:w-[45%] lg:w-[48%] overflow-hidden rounded-t-2xl md:rounded-l-2xl md:rounded-tr-none">
                   <div className="h-64 w-full overflow-hidden md:h-full md:min-h-[228px]">
                     <img
                       src={p.thumb}
@@ -281,19 +282,7 @@ const Experience = () => {
                   {p.actions?.length > 0 && (
                     <div className="mt-4 flex flex-wrap gap-2 pt-1">
                       {p.actions.map((a) => (
-                        <a
-                          key={a.label}
-                          href={a.href}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className={
-                            a.primary
-                              ? 'inline-flex items-center gap-1 rounded-lg bg-blue-gradient px-4 py-2 font-source-code-pro text-sm font-semibold text-black transition-transform duration-200 hover:scale-[1.03]'
-                              : 'inline-flex items-center gap-1 rounded-lg border border-[#5ce1e6]/40 px-4 py-2 font-source-code-pro text-sm font-semibold text-[#5ce1e6] transition-colors duration-200 hover:border-[#5ce1e6] hover:bg-[#5ce1e6]/10'
-                          }
-                        >
-                          {a.label} <span aria-hidden="true">↗</span>
-                        </a>
+                        <ProjectAction key={a.label} action={a} projectTitle={p.title} size="md" />
                       ))}
                     </div>
                   )}
