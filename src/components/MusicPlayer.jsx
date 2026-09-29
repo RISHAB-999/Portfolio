@@ -52,6 +52,9 @@ const MusicPlayer = ({ embedded = false }) => {
   const [isHovered, setIsHovered] = useState(false);
   const audioRef = useRef(null);
   const capsuleRef = useRef(null);
+  const showCardRef = useRef(false);
+  const mouseRafRef = useRef(null);
+  const cachedBoundsRef = useRef(null);
 
   // Monitor document.body for pause-menu-open class (mobile hamburger menu)
   useEffect(() => {
@@ -66,9 +69,15 @@ const MusicPlayer = ({ embedded = false }) => {
 
   // Reset repulsion and mouse tracking when card state changes to prevent wave bar distortion
   useEffect(() => {
+    showCardRef.current = showCard;
     setIsHovered(false);
     setMousePos({ x: -999, y: -999 });
     setTilt({ rotateX: 0, rotateY: 0 });
+    // Sync current time/duration when opening the card so the seek bar is accurate
+    if (showCard && audioRef.current) {
+      setCurrentTime(audioRef.current.currentTime);
+      setDuration(audioRef.current.duration || 0);
+    }
   }, [showCard]);
 
   const currentTrackIndexRef = useRef(currentTrackIndex);
@@ -117,7 +126,10 @@ const MusicPlayer = ({ embedded = false }) => {
     audio.volume = volume;
     audioRef.current = audio;
 
-    const handleTimeUpdate = () => setCurrentTime(audio.currentTime);
+    // Only re-render when the MusicCard is open and displaying the seek bar
+    const handleTimeUpdate = () => {
+      if (showCardRef.current) setCurrentTime(audio.currentTime);
+    };
     const handleLoadedMetadata = () => setDuration(audio.duration || 0);
     const handleEnded = () => {
       const total = playlist.length;
@@ -222,13 +234,24 @@ const MusicPlayer = ({ embedded = false }) => {
 
   const handleMouseMove = (e) => {
     if (isTouch) return;
-    const rect = e.currentTarget.getBoundingClientRect();
-    const x = e.clientX - rect.left;
-    const y = e.clientY - rect.top;
-    setMousePos({ x, y });
-    setTilt({
-      rotateX: ((y - rect.height / 2) / (rect.height / 2)) * -18,
-      rotateY: ((x - rect.width / 2) / (rect.width / 2)) * 18,
+    // rAF-throttle to cap at 60fps and avoid redundant React re-renders
+    const clientX = e.clientX;
+    const clientY = e.clientY;
+    const target = e.currentTarget;
+    if (mouseRafRef.current) cancelAnimationFrame(mouseRafRef.current);
+    mouseRafRef.current = requestAnimationFrame(() => {
+      mouseRafRef.current = null;
+      if (!cachedBoundsRef.current) {
+        cachedBoundsRef.current = target.getBoundingClientRect();
+      }
+      const rect = cachedBoundsRef.current;
+      const x = clientX - rect.left;
+      const y = clientY - rect.top;
+      setMousePos({ x, y });
+      setTilt({
+        rotateX: ((y - rect.height / 2) / (rect.height / 2)) * -18,
+        rotateY: ((x - rect.width / 2) / (rect.width / 2)) * 18,
+      });
     });
   };
 
@@ -270,7 +293,7 @@ const MusicPlayer = ({ embedded = false }) => {
               }}
               transition={{ layout: { type: 'spring', stiffness: 400, damping: 35 }, duration: 0.2, ease: 'easeOut' }}
               onMouseMove={handleMouseMove}
-              onMouseEnter={() => { if (enableRepulsion) setIsHovered(true); }}
+              onMouseEnter={() => { cachedBoundsRef.current = null; if (enableRepulsion) setIsHovered(true); }}
               onMouseLeave={() => {
                 setIsHovered(false);
                 setMousePos({ x: -999, y: -999 });

@@ -792,3 +792,25 @@ section[class*="hover:"] *:active, div[class*="hover:"] *:active, article[class*
 .rock-surface *:active, .group *:active {
   cursor: url('./assets/cursor3_small.png'), pointer !important;
 }
+
+/* ── Typing cursor blink (replaces React useState timer) ─────────────── */
+.cursor-blink {
+  animation: cursorBlink 1s step-end infinite;
+}
+@keyframes cursorBlink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0; }
+}
+
+/* ── Accessibility: prefers-reduced-motion ────────────────────────────
+   Only fires for users who've explicitly opted out of animations via
+   their OS accessibility settings. Normal visitors still see every
+   effect — this is NOT used as a performance shortcut. */
+@media (prefers-reduced-motion: reduce) {
+  .hdr-star,
+  .pause-led,
+  .cursor-blink {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+  }
+}

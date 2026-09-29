@@ -11,6 +11,57 @@ import grassImg from '../assets/grass3.png';
 import resumePdf from '../assets/resume.pdf';
 import profilePic from '../assets/Rishab.jpeg';
 
+// ─── Isolated Typewriter ────────────────────────────────────────────────────
+// Extracted so its rapid setState calls (~20/sec) only re-render this tiny
+// component instead of the entire Resume page.
+const ROLES = [
+  'Software Developer',
+  'Full-Stack Developer',
+  'Flutter App Developer',
+  'Web Developer',
+];
+
+const Typewriter = () => {
+  const [currentRoleIndex, setCurrentRoleIndex] = useState(0);
+  const [currentText, setCurrentText] = useState('');
+  const [isDeleting, setIsDeleting] = useState(false);
+
+  useEffect(() => {
+    let timer;
+    const fullText = ROLES[currentRoleIndex];
+
+    const handleTyping = () => {
+      if (!isDeleting) {
+        setCurrentText(fullText.substring(0, currentText.length + 1));
+        if (currentText.length === fullText.length) {
+          timer = setTimeout(() => setIsDeleting(true), 1500);
+          return;
+        }
+      } else {
+        setCurrentText(fullText.substring(0, currentText.length - 1));
+        if (currentText.length === 0) {
+          setIsDeleting(false);
+          setCurrentRoleIndex((prev) => (prev + 1) % ROLES.length);
+          return;
+        }
+      }
+
+      const speed = isDeleting ? 50 : 100;
+      timer = setTimeout(handleTyping, speed);
+    };
+
+    timer = setTimeout(handleTyping, isDeleting ? 50 : 100);
+    return () => clearTimeout(timer);
+  }, [currentText, isDeleting, currentRoleIndex]);
+
+  return (
+    <span className="text-[#5ce1e6] font-bold">
+      {currentText}
+      <span className="cursor-blink ml-0.5 font-normal text-white">|</span>
+    </span>
+  );
+};
+
 // ─── Resume Data ────────────────────────────────────────────────────────────
 const resumeData = {
   name: 'RISHAB NEGI',
@@ -69,43 +120,6 @@ const resumeData = {
 // ─── Main Component ──────────────────────────────────────────────────────────
 
 const Resume = () => {
-  const roles = [
-    'Software Developer',
-    'Full-Stack Developer',
-    'Flutter App Developer',
-    'Web Developer'
-  ];
-  const [currentRoleIndex, setCurrentRoleIndex] = useState(0);
-  const [currentText, setCurrentText] = useState('');
-  const [isDeleting, setIsDeleting] = useState(false);
-
-  useEffect(() => {
-    let timer;
-    const fullText = roles[currentRoleIndex];
-
-    const handleTyping = () => {
-      if (!isDeleting) {
-        setCurrentText(fullText.substring(0, currentText.length + 1));
-        if (currentText.length === fullText.length) {
-          timer = setTimeout(() => setIsDeleting(true), 1500);
-          return;
-        }
-      } else {
-        setCurrentText(fullText.substring(0, currentText.length - 1));
-        if (currentText.length === 0) {
-          setIsDeleting(false);
-          setCurrentRoleIndex((prev) => (prev + 1) % roles.length);
-          return;
-        }
-      }
-
-      const speed = isDeleting ? 50 : 100;
-      timer = setTimeout(handleTyping, speed);
-    };
-
-    timer = setTimeout(handleTyping, isDeleting ? 50 : 100);
-    return () => clearTimeout(timer);
-  }, [currentText, isDeleting, currentRoleIndex, roles]);
 
   return (
     <div className="relative min-h-screen flex flex-col">
@@ -212,10 +226,7 @@ const Resume = () => {
               <div className="w-full mt-8 space-y-4 font-source-code-pro text-sm border-t border-[#5ce1e6]/15 pt-6">
                 <div className="flex justify-between items-center">
                   <span className="text-white/40 text-xs tracking-wider uppercase">Class:</span>
-                  <span className="text-[#5ce1e6] font-bold">
-                    {currentText}
-                    <span className="animate-pulse ml-0.5 font-normal text-white">|</span>
-                  </span>
+                  <Typewriter />
                 </div>
                 <div className="flex justify-between items-center">
                   <span className="text-white/40 text-xs tracking-wider uppercase">Xp_level:</span>

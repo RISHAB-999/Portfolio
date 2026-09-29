@@ -6,7 +6,7 @@ const titles = hero.titles;
 
 const CentreBlock = () => {
   const [titleText, setTitleText] = useState('');
-  const [showCursor, setShowCursor] = useState(true);
+
   const [titleIndex, setTitleIndex] = useState(0);
   const [charIndex, setCharIndex] = useState(0);
   const [deleting, setDeleting] = useState(false);
@@ -51,13 +51,7 @@ const CentreBlock = () => {
     };
   }, [charIndex, titleIndex, deleting]);
 
-  useEffect(() => {
-    const cursorBlinkInterval = setInterval(() => {
-      setShowCursor((prev) => !prev);
-    }, 500);
 
-    return () => clearInterval(cursorBlinkInterval);
-  }, []);
 
   return (
     <section id="home" className={`relative flex items-start ${styles.paddingY}`}>
@@ -74,7 +68,7 @@ const CentreBlock = () => {
           </h1>
           <p className="font-source-code-pro font-normal text-white md:mr-10 md:text-[30px] text-[18px] sm:text-[25px] mb-2 sm:mb-3 pixel-shadow">
             {hero.prefix}{titleText}
-            <span style={{ opacity: showCursor ? 1 : 0 }}>|</span>
+            <span className="cursor-blink">|</span>
           </p>
           <p className="font-source-code-pro font-normal text-white md:mr-10 md:text-[22px] text-[14px] sm:text-[18px] pixel-shadow">
             {hero.location}

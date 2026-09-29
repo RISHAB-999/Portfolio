@@ -33,7 +33,7 @@ const itemVariants = {
 const Navbar = () => {
   const [toggle, setToggle] = useState(false);
 
-  const [mousePos, setMousePos] = useState({ x: -999, y: -999 });
+
   const [isHovered, setIsHovered] = useState(false);
   const [showNavbar, setShowNavbar] = useState(true);
   const navigate = useNavigate();
@@ -58,9 +58,11 @@ const Navbar = () => {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
+  // Update glow position via CSS custom property — no React re-render needed
   const handleMouseMove = (e) => {
     const rect = e.currentTarget.getBoundingClientRect();
-    setMousePos({ x: e.clientX - rect.left, y: e.clientY - rect.top });
+    e.currentTarget.style.setProperty('--glow-x', `${e.clientX - rect.left}px`);
+    e.currentTarget.style.setProperty('--glow-y', `${e.clientY - rect.top}px`);
   };
 
   // Mark the current route's row with the ▸ cursor. '/' and '/home' both map to "home".
@@ -135,29 +137,19 @@ const Navbar = () => {
         onMouseEnter={() => setIsHovered(true)}
         onMouseLeave={() => {
           setIsHovered(false);
-          setMousePos({ x: -999, y: -999 });
         }}
         style={{ '--svg-glass-url': 'url(#navbar-glass)' }}
         className="glass-card use-svg-glass w-[min(94vw,700px)] h-11 sm:h-13 flex items-center justify-between px-6 sm:px-10 !rounded-full transition-all mx-auto relative pointer-events-auto !overflow-hidden sm:!overflow-visible"
       >
-        {/* Dynamic Hover Glow Effect */}
-        <AnimatePresence>
-          {isHovered && (
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              className="absolute inset-0 pointer-events-none z-0 overflow-hidden !rounded-full"
-            >
-              <div
-                className="absolute inset-0"
-                style={{
-                  background: `radial-gradient(100px circle at ${mousePos.x}px ${mousePos.y}px, rgba(92,225,230,0.35), transparent 85%)`,
-                }}
-              />
-            </motion.div>
-          )}
-        </AnimatePresence>
+        {/* Dynamic Hover Glow Effect — position updated via CSS variable to avoid re-renders */}
+        <div
+          className="absolute inset-0 pointer-events-none z-0 overflow-hidden !rounded-full"
+          style={{
+            opacity: isHovered ? 1 : 0,
+            transition: 'opacity 0.15s ease',
+            background: 'radial-gradient(100px circle at var(--glow-x, 50%) var(--glow-y, 50%), rgba(92,225,230,0.35), transparent 85%)',
+          }}
+        />
 
         {/* Brand Logo directly inside navbar (pops cleanly out over top/bottom of slim card) */}
         <motion.div

@@ -170,7 +170,15 @@ export function imageDataToDataURL(imageData) {
   return canvas.toDataURL();
 }
 
+// Module-level cache for generated glass assets keyed by dimensions + options.
+const _glassCache = new Map();
+const _MAX_GLASS_CACHE = 20;
+
 export function generateLiquidGlassAssets(width, height, options = {}) {
+  // Return cached result if dimensions + options match a prior computation
+  const cacheKey = `${width}:${height}:${JSON.stringify(options)}`;
+  if (_glassCache.has(cacheKey)) return _glassCache.get(cacheKey);
+
   const {
     surfaceType = "convex_squircle",
     bezelWidth = 30,
@@ -194,9 +202,18 @@ export function generateLiquidGlassAssets(width, height, options = {}) {
   const displacementData = calculateDisplacementMap2D(w, h, w, h, r, bWidth, maximumDisplacement || 1, precomputed);
   const specularData = calculateSpecularHighlight(w, h, r, bWidth);
 
-  return {
+  const result = {
     displacementUrl: imageDataToDataURL(displacementData),
     specularUrl: imageDataToDataURL(specularData),
     maximumDisplacement,
   };
+
+  // LRU-style eviction: drop the oldest entry when the cache is full
+  if (_glassCache.size >= _MAX_GLASS_CACHE) {
+    const oldest = _glassCache.keys().next().value;
+    _glassCache.delete(oldest);
+  }
+  _glassCache.set(cacheKey, result);
+
+  return result;
 }

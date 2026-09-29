@@ -23,6 +23,8 @@ const LiquidGlassFilter = ({ id, targetRef, options = {} }) => {
       setAssets(generateLiquidGlassAssets(initialWidth, initialHeight, parsedOptions));
     }
 
+    const lastGenDims = { width: initialWidth, height: initialHeight };
+
     const observer = new ResizeObserver((entries) => {
       if (!entries[0]) return;
       
@@ -34,9 +36,16 @@ const LiquidGlassFilter = ({ id, targetRef, options = {} }) => {
       
       const width = el.offsetWidth;
       const height = el.offsetHeight;
+
+      // Skip regeneration if dimensions haven't meaningfully changed (< 3px)
+      if (Math.abs(width - lastGenDims.width) < 3 && Math.abs(height - lastGenDims.height) < 3) {
+        return;
+      }
       
       if (timeoutRef.current) clearTimeout(timeoutRef.current);
       timeoutRef.current = setTimeout(() => {
+        lastGenDims.width = width;
+        lastGenDims.height = height;
         setDimensions({ width, height });
         const parsedOptions = JSON.parse(optionsKey);
         const newAssets = generateLiquidGlassAssets(width, height, parsedOptions);

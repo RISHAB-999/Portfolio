@@ -1,4 +1,4 @@
-import { useRef, useEffect, useLayoutEffect, useState, Suspense } from 'react';
+import { useRef, useEffect, useLayoutEffect, useState, Suspense, lazy } from 'react';
 import { HashRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
 import styles from './style';
 import './index.css';
@@ -7,23 +7,18 @@ import Home from './pages/Home';
 import { Navbar, Footer, PostFooterHome, CaveStalactites, MusicPlayer } from './components';
 import { kirbyfloating, rocks, grass, caveBG } from './assets';
 import { pageConfig, DEFAULT_PAGE, location as siteLocation } from './data/siteConfig';
-import profilePic from './assets/Rishab.jpeg';
-import fullStackWeb from './assets/Full-Stack_Web.png';
-import mobileApp from './assets/Mobile_app.png';
-import cloudDevOps from './assets/Cloud.png';
-import softwareEngineering from './assets/Software_Engineering.png';
 import cursor1 from './assets/cursor1_small.png';
 import cursor2 from './assets/cursor2_small.png';
 import cursor3 from './assets/cursor3_small.png';
 
 // Route components are code-split so each page's JS loads only when visited.
 // Home stays eager since it's the landing route.
-import About from './pages/About';
-import Projects from './pages/Projects';
-import Experience from './pages/Experience';
-import Contact from './pages/Contact';
-import Page404 from './pages/Page404';
-import Resume from './pages/Resume';
+const About = lazy(() => import('./pages/About'));
+const Projects = lazy(() => import('./pages/Projects'));
+const Experience = lazy(() => import('./pages/Experience'));
+const Contact = lazy(() => import('./pages/Contact'));
+const Page404 = lazy(() => import('./pages/Page404'));
+const Resume = lazy(() => import('./pages/Resume'));
 
 // Flickering stars scattered across the header. Positions are fixed (so they
 // don't reshuffle); each twinkles on its own duration/delay. Module-scoped so
@@ -43,11 +38,7 @@ const headerStars = [
   { left: '94%', top: '50%', size: 2, dur: '3.3s', delay: '0.8s', color: '#cdebff' },
 ];
 
-// Gather all unique background images from the config to pre-render them
-const uniqueBackgrounds = [...new Set([
-  ...Object.values(pageConfig).map(cfg => cfg.background).filter(Boolean),
-  DEFAULT_PAGE.background
-])];
+
 
 const AppContent = () => {
 
@@ -58,6 +49,27 @@ const AppContent = () => {
   const isResumePage = location.pathname === '/resume';
 
   const postFooterRef = useRef(null);
+
+  // Only mount the current background + a fading-out previous one (crossfade).
+  // This avoids decoding ALL heavy GIF backgrounds (~10MB+) simultaneously.
+  const prevBgRef = useRef(backgroundImage);
+  const bgTimerRef = useRef(null);
+  const [mountedBgs, setMountedBgs] = useState([backgroundImage]);
+
+  useEffect(() => {
+    if (backgroundImage === prevBgRef.current) return;
+    prevBgRef.current = backgroundImage;
+    // Mount both for crossfade
+    setMountedBgs((prev) => [...new Set([...prev, backgroundImage])]);
+    // After CSS transition (500ms) + buffer, unmount old backgrounds
+    if (bgTimerRef.current) clearTimeout(bgTimerRef.current);
+    bgTimerRef.current = setTimeout(() => {
+      setMountedBgs([backgroundImage]);
+    }, 600);
+    return () => {
+      if (bgTimerRef.current) clearTimeout(bgTimerRef.current);
+    };
+  }, [backgroundImage]);
 
   // Kirby (the floating mascot) is positioned imperatively via this ref — on both
   // desktop (cursor-follow) and mobile (rAF drift) — so neither cursor moves nor
@@ -334,13 +346,13 @@ const AppContent = () => {
       )}
 
       <div className={`${isResumePage ? 'bg-transparent' : 'bg-primary'} min-h-screen w-full flex flex-col relative`}>
-        {/* Main Content Background layers (Pre-rendered for zero-lag transitions) */}
-        {uniqueBackgrounds.map((bgSrc, idx) => {
+        {/* Main Content Background — only current + fading-out previous are mounted */}
+        {mountedBgs.map((bgSrc) => {
           const isResumeBg = bgSrc === pageConfig['/resume']?.background;
           
           return (
             <div
-              key={idx}
+              key={bgSrc}
               className={
                 isResumeBg
                   ? 'fixed inset-0 z-0'
