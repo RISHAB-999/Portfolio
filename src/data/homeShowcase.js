@@ -99,7 +99,7 @@ export const featuredWork = [
       },
       {
         label: 'Live',
-        href: 'https://therapique.vercel.app/',
+        href: 'https://therapique-frontend.vercel.app',
         primary: true,
       },
     ],
