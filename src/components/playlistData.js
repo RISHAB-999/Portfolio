@@ -1,5 +1,6 @@
-import lofiTrack from '../assets/lofi.mp3';
-import pixelCityArt from '../assets/pixel-city.gif';
+// Album-cover copy of pixel-city.gif, downscaled (same 64 frames/timing) so a
+// 56px thumbnail doesn't decode a 498x311, 3.3MB animation every frame.
+import pixelCityArt from '../assets/pixel-city-cover.gif';
 
 import calmTrack from '../assets/song&wallpaper/Calm.mp3';
 import calmArt from '../assets/song&wallpaper/Calm.jpg';

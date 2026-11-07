@@ -1,12 +1,12 @@
-import { useState, useRef, useEffect, useCallback } from 'react';
+import { useState, useRef, useEffect, useCallback, useSyncExternalStore } from 'react';
 import { createPortal } from 'react-dom';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence, useSpring } from 'framer-motion';
 
 import musicOnIcon from '../assets/music on.png';
 import musicOffIcon from '../assets/music_off.png';
 import MusicCard from './MusicCard';
 import LiquidGlassFilter from './LiquidGlassFilter';
-import { playlist } from './playlistData';
+import { musicStore, initAutoplay, toggle, setTrack, setVolume, seek } from '../utils/musicAudio';
 
 const waveformBars = [
   { min: 3, max: 10, speed: 0.6, delay: 0 },
@@ -21,40 +21,69 @@ const waveformBars = [
   { min: 3, max: 9, speed: 0.45, delay: 0.05 },
 ];
 
+// Per-bar CSS custom properties, built once (not per render).
+const barStyles = waveformBars.map((bar) => ({
+  '--bar-max': `${bar.max}px`,
+  '--bar-min-ratio': bar.min / bar.max,
+  '--bar-speed': `${bar.speed}s`,
+  '--bar-delay': `${bar.delay}s`,
+}));
+
+const springConfig = { stiffness: 400, damping: 30 };
+
 /**
  * MusicPlayer
  *
  * Props:
  *  embedded — when true, renders inline (no fixed/portal) inside the HUD container in App.jsx (desktop).
  *             when false/undefined, only renders on mobile when the hamburger menu is open (via portal).
+ *
+ * Audio lives in utils/musicAudio.js (one shared element). Hover effects (tilt,
+ * glow, waveform repulsion) are written straight to motion values / styles so
+ * moving the mouse over the capsule never re-renders this component.
  */
 const MusicPlayer = ({ embedded = false }) => {
-  const [isPlaying, setIsPlaying] = useState(false);
-  const [needsClickToPlay, setNeedsClickToPlay] = useState(false);
+  const { isPlaying, needsClickToPlay, trackIndex, volume } = useSyncExternalStore(
+    musicStore.subscribe,
+    musicStore.getSnapshot
+  );
   const [showCard, setShowCard] = useState(false);
+  // The card is mounted ahead of time (on hover/focus of the capsule, or when the
+  // browser is idle) and then only shown/hidden, so opening it never pays for
+  // mounting ~10 animated components and building its glass filter.
+  const [cardMounted, setCardMounted] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [isHovered, setIsHovered] = useState(false);
   const [isTouch] = useState(
     () => typeof window !== 'undefined' &&
       (window.matchMedia('(pointer: coarse)').matches || 'ontouchstart' in window)
   );
 
-  // Persistent Volume Memory via localStorage (default 50% / 0.5)
-  const [volume, setVolume] = useState(() => {
-    const savedVol = localStorage.getItem('portfolio_music_volume');
-    return savedVol !== null ? parseFloat(savedVol) : 0.5;
-  });
-
-  const [currentTrackIndex, setCurrentTrackIndex] = useState(0);
-  const [currentTime, setCurrentTime] = useState(0);
-  const [duration, setDuration] = useState(0);
-  const [mousePos, setMousePos] = useState({ x: -999, y: -999 });
-  const [tilt, setTilt] = useState({ rotateX: 0, rotateY: 0 });
-  const [isHovered, setIsHovered] = useState(false);
-  const audioRef = useRef(null);
   const capsuleRef = useRef(null);
-  const showCardRef = useRef(false);
+  const glowRef = useRef(null);
+  const barRefs = useRef([]);
   const mouseRafRef = useRef(null);
   const cachedBoundsRef = useRef(null);
+
+  const scale = useSpring(1, springConfig);
+  const rotateX = useSpring(0, springConfig);
+  const rotateY = useSpring(0, springConfig);
+
+  useEffect(() => {
+    initAutoplay();
+  }, []);
+
+  useEffect(() => {
+    if (cardMounted) return undefined;
+    const mount = () => setCardMounted(true);
+    if ('requestIdleCallback' in window) {
+      const id = window.requestIdleCallback(mount, { timeout: 4000 });
+      return () => window.cancelIdleCallback(id);
+    }
+    const t = setTimeout(mount, 2500);
+    return () => clearTimeout(t);
+  }, [cardMounted]);
+  const premountCard = useCallback(() => setCardMounted(true), []);
 
   // Monitor document.body for pause-menu-open class (mobile hamburger menu)
   useEffect(() => {
@@ -67,195 +96,78 @@ const MusicPlayer = ({ embedded = false }) => {
     return () => observer.disconnect();
   }, []);
 
-  // Reset repulsion and mouse tracking when card state changes to prevent wave bar distortion
-  useEffect(() => {
-    showCardRef.current = showCard;
-    setIsHovered(false);
-    setMousePos({ x: -999, y: -999 });
-    setTilt({ rotateX: 0, rotateY: 0 });
-    // Sync current time/duration when opening the card so the seek bar is accurate
-    if (showCard && audioRef.current) {
-      setCurrentTime(audioRef.current.currentTime);
-      setDuration(audioRef.current.duration || 0);
-    }
-  }, [showCard]);
-
-  const currentTrackIndexRef = useRef(currentTrackIndex);
-  useEffect(() => {
-    currentTrackIndexRef.current = currentTrackIndex;
-  }, [currentTrackIndex]);
-
-  const changeTrack = useCallback((index) => {
-    const total = playlist.length;
-    const newIndex = (index + total) % total;
-    setCurrentTrackIndex(newIndex);
-    currentTrackIndexRef.current = newIndex;
-    setCurrentTime(0);
-
-    const audio = audioRef.current;
-    if (audio) {
-      audio.pause();
-      audio.src = playlist[newIndex].src;
-      audio.currentTime = 0;
-      audio.load();
-
-      setTimeout(() => {
-        const playPromise = audio.play();
-        if (playPromise !== undefined) {
-          playPromise
-            .then(() => {
-              setIsPlaying(true);
-            })
-            .catch((err) => {
-              console.warn('Track play error, waiting for canplaythrough:', err);
-              const onCanPlay = () => {
-                audio.removeEventListener('canplaythrough', onCanPlay);
-                audio.play().then(() => setIsPlaying(true)).catch(() => setIsPlaying(false));
-              };
-              audio.addEventListener('canplaythrough', onCanPlay);
-            });
-        }
-      }, 50);
-    }
+  useEffect(() => () => {
+    if (mouseRafRef.current) cancelAnimationFrame(mouseRafRef.current);
   }, []);
 
-  useEffect(() => {
-    const audio = new Audio(playlist[0].src);
-    audio.preload = 'none';
-    audio.loop = false;
-    audio.volume = volume;
-    audioRef.current = audio;
+  const enableRepulsion = !isTouch && !isMobileMenuOpen;
 
-    // Only re-render when the MusicCard is open and displaying the seek bar
-    const handleTimeUpdate = () => {
-      if (showCardRef.current) setCurrentTime(audio.currentTime);
-    };
-    const handleLoadedMetadata = () => setDuration(audio.duration || 0);
-    const handleEnded = () => {
-      const total = playlist.length;
-      const nextIndex = (currentTrackIndexRef.current + 1) % total;
-      setTimeout(() => {
-        changeTrack(nextIndex);
-      }, 100);
-    };
-
-    audio.addEventListener('timeupdate', handleTimeUpdate);
-    audio.addEventListener('loadedmetadata', handleLoadedMetadata);
-    audio.addEventListener('ended', handleEnded);
-
-    let hasActivated = false;
-
-    const removeInteractionListeners = () => {
-      window.removeEventListener('click', handleUserGesture, true);
-      window.removeEventListener('pointerdown', handleUserGesture, true);
-      window.removeEventListener('mousedown', handleUserGesture, true);
-      window.removeEventListener('touchstart', handleUserGesture, true);
-      window.removeEventListener('keydown', handleUserGesture, true);
-    };
-
-    function handleUserGesture(e) {
-      if (e?.target?.closest?.('button')) return;
-      if (!audioRef.current || hasActivated) return;
-
-      audioRef.current.muted = false;
-      const playPromise = audioRef.current.play();
-      if (playPromise !== undefined) {
-        playPromise
-          .then(() => {
-            hasActivated = true;
-            setIsPlaying(true);
-            setNeedsClickToPlay(false);
-            removeInteractionListeners();
-          })
-          .catch(() => {});
-      }
+  const resetHover = useCallback(() => {
+    if (mouseRafRef.current) {
+      cancelAnimationFrame(mouseRafRef.current);
+      mouseRafRef.current = null;
     }
+    scale.set(1);
+    rotateX.set(0);
+    rotateY.set(0);
+    barRefs.current.forEach((el) => {
+      if (el) el.style.transform = '';
+    });
+    setIsHovered(false);
+  }, [scale, rotateX, rotateY]);
 
-    const tryAutoplay = () => {
-      if (!audioRef.current) return;
-      audioRef.current.muted = false;
-      const playPromise = audioRef.current.play();
-      if (playPromise !== undefined) {
-        playPromise
-          .then(() => {
-            hasActivated = true;
-            setIsPlaying(true);
-            setNeedsClickToPlay(false);
-          })
-          .catch(() => {
-            // Autoplay blocked by browser security policy — prompt user to click anywhere
-            setNeedsClickToPlay(true);
-            window.addEventListener('click', handleUserGesture, true);
-            window.addEventListener('pointerdown', handleUserGesture, true);
-            window.addEventListener('mousedown', handleUserGesture, true);
-            window.addEventListener('touchstart', handleUserGesture, true);
-            window.addEventListener('keydown', handleUserGesture, true);
-          });
-      }
-    };
+  const closeCard = useCallback(() => setShowCard(false), []);
+  const openCard = useCallback((e) => {
+    e.stopPropagation();
+    resetHover();
+    setCardMounted(true);
+    setShowCard(true);
+  }, [resetHover]);
 
-    tryAutoplay();
-
-    return () => {
-      audio.removeEventListener('timeupdate', handleTimeUpdate);
-      audio.removeEventListener('loadedmetadata', handleLoadedMetadata);
-      audio.removeEventListener('ended', handleEnded);
-      removeInteractionListeners();
-      audio.pause();
-    };
-  }, [changeTrack]);
-
-  const toggleMusic = (e) => {
+  const toggleMusic = useCallback((e) => {
     e?.stopPropagation();
-    if (!audioRef.current) return;
-    if (isPlaying) {
-      audioRef.current.pause();
-      setIsPlaying(false);
-    } else {
-      setIsPlaying(true);
-      audioRef.current.play().catch(() => setIsPlaying(false));
-    }
-  };
-
-  const handleVolumeChange = (e) => {
-    const newVol = parseFloat(e.target.value);
-    setVolume(newVol);
-    localStorage.setItem('portfolio_music_volume', newVol.toString());
-    if (audioRef.current) audioRef.current.volume = newVol;
-  };
-
-  const handleSeek = (e) => {
-    const seekTime = parseFloat(e.target.value);
-    setCurrentTime(seekTime);
-    if (audioRef.current) {
-      audioRef.current.currentTime = seekTime;
-    }
-  };
+    toggle();
+  }, []);
+  const handleVolumeChange = useCallback((e) => setVolume(parseFloat(e.target.value)), []);
+  const handleSeek = useCallback((e) => seek(parseFloat(e.target.value)), []);
 
   const handleMouseMove = (e) => {
-    if (isTouch) return;
-    // rAF-throttle to cap at 60fps and avoid redundant React re-renders
-    const clientX = e.clientX;
-    const clientY = e.clientY;
+    if (!enableRepulsion) return;
+    const { clientX, clientY } = e;
     const target = e.currentTarget;
-    if (mouseRafRef.current) cancelAnimationFrame(mouseRafRef.current);
+    if (mouseRafRef.current) return; // one update per frame
     mouseRafRef.current = requestAnimationFrame(() => {
       mouseRafRef.current = null;
-      if (!cachedBoundsRef.current) {
-        cachedBoundsRef.current = target.getBoundingClientRect();
-      }
+      if (!cachedBoundsRef.current) cachedBoundsRef.current = target.getBoundingClientRect();
       const rect = cachedBoundsRef.current;
       const x = clientX - rect.left;
       const y = clientY - rect.top;
-      setMousePos({ x, y });
-      setTilt({
-        rotateX: ((y - rect.height / 2) / (rect.height / 2)) * -18,
-        rotateY: ((x - rect.width / 2) / (rect.width / 2)) * 18,
-      });
+      // Set on the glow element itself (a leaf): custom properties inherit, so
+      // setting them on the capsule would restyle its whole subtree per move.
+      const glow = glowRef.current;
+      if (glow) {
+        glow.style.setProperty('--mx', `${x}px`);
+        glow.style.setProperty('--my', `${y}px`);
+      }
+      rotateX.set(((y - rect.height / 2) / (rect.height / 2)) * -18);
+      rotateY.set(((x - rect.width / 2) / (rect.width / 2)) * 18);
+      // Waveform bars push away from the cursor (same maths as before).
+      for (let i = 0; i < barRefs.current.length; i++) {
+        const el = barRefs.current[i];
+        if (!el) continue;
+        const dx = 72 + i * 12 - x;
+        const dy = 28 - y;
+        const dist = Math.hypot(dx, dy) || 1;
+        if (dist < 45) {
+          const force = 1 - dist / 45;
+          el.style.transform =
+            `translate(${(dx / dist) * force * 22}px, ${(dy / dist) * force * 16}px) rotate(${(dx / dist) * force * 25}deg)`;
+        } else if (el.style.transform) {
+          el.style.transform = '';
+        }
+      }
     });
   };
-
-  const enableRepulsion = !isTouch && !isMobileMenuOpen;
 
   // ─── Shared capsule + card JSX ───────────────────────────────────────────────
   const isMobileNav = !embedded; // when not embedded → inside mobile menu
@@ -263,44 +175,53 @@ const MusicPlayer = ({ embedded = false }) => {
 
   const capsuleAndCard = (
     <div className="relative flex items-center">
-      <AnimatePresence initial={false} mode="wait">
-        {showCard ? (
+      {cardMounted && (
+        // Overlays the capsule's spot (same top-left / bottom-centre origin as
+        // before) without taking layout space while closed. data-swarm-live:
+        // stays usable while the Motion swarm is running.
+        <div
+          data-swarm-live=""
+          className={embedded ? 'absolute top-0 left-0 z-40' : 'absolute bottom-0 left-1/2 -translate-x-1/2 z-40'}
+          style={{ pointerEvents: showCard ? 'auto' : 'none' }}
+        >
           <MusicCard
-            key="music-card"
+            open={showCard}
             isPlaying={isPlaying}
             volume={volume}
-            currentTrackIndex={currentTrackIndex}
-            currentTime={currentTime}
-            duration={duration}
+            currentTrackIndex={trackIndex}
             toggleMusic={toggleMusic}
             handleVolumeChange={handleVolumeChange}
             handleSeek={handleSeek}
-            changeTrack={changeTrack}
-            onClose={() => setShowCard(false)}
+            changeTrack={setTrack}
+            onClose={closeCard}
             isMobileNav={isMobileNav}
           />
-        ) : (
+        </div>
+      )}
           <>
-            <LiquidGlassFilter id="music-player-glass" targetRef={capsuleRef} options={{ fps: 30 }} />
+            <LiquidGlassFilter id="music-player-glass" targetRef={capsuleRef} />
             <motion.div
               ref={capsuleRef}
               key="music-capsule"
               layout="size"
-              animate={{
-                scale: isHovered && enableRepulsion ? 1.06 : 1,
-                rotateX: isHovered && enableRepulsion ? tilt.rotateX : 0,
-                rotateY: isHovered && enableRepulsion ? tilt.rotateY : 0,
-              }}
-              transition={{ layout: { type: 'spring', stiffness: 400, damping: 35 }, duration: 0.2, ease: 'easeOut' }}
+              // only re-measure when the capsule's size can actually change (play/pause);
+              // otherwise every re-render (e.g. opening the card) forces a layout read
+              layoutDependency={isPlaying}
+              transition={{ layout: { type: 'spring', stiffness: 400, damping: 35 } }}
               onMouseMove={handleMouseMove}
-              onMouseEnter={() => { cachedBoundsRef.current = null; if (enableRepulsion) setIsHovered(true); }}
-              onMouseLeave={() => {
-                setIsHovered(false);
-                setMousePos({ x: -999, y: -999 });
-                setTilt({ rotateX: 0, rotateY: 0 });
+              onMouseEnter={() => {
+                cachedBoundsRef.current = null;
+                if (enableRepulsion) {
+                  scale.set(1.06);
+                  setIsHovered(true);
+                }
               }}
-              style={{ transformOrigin: cardOrigin, '--svg-glass-url': 'url(#music-player-glass)' }}
-              className={`relative flex items-center gap-1.5 h-10 use-svg-glass liquid-glass overflow-hidden pointer-events-auto ${
+              onMouseLeave={resetHover}
+              onPointerEnter={premountCard}
+              onFocus={premountCard}
+              aria-hidden={showCard || undefined}
+              style={{ scale, rotateX, rotateY, transformOrigin: cardOrigin, '--svg-glass-url': 'url(#music-player-glass)', visibility: showCard ? 'hidden' : undefined, opacity: showCard ? 0 : 1 }}
+              className={`relative flex items-center gap-1.5 h-10 use-svg-glass liquid-glass overflow-hidden pointer-events-auto ${showCard ? 'music-loops-paused ' : ''}${
                 isPlaying
                   ? 'pl-2.5 pr-3.5 !rounded-full'
                   : 'w-10 justify-center !rounded-full'
@@ -308,18 +229,15 @@ const MusicPlayer = ({ embedded = false }) => {
             >
             {isHovered && enableRepulsion && (
               <div
+                ref={glowRef}
                 className="absolute inset-0 pointer-events-none z-10"
                 style={{
-                  background: `radial-gradient(45px circle at ${mousePos.x}px ${mousePos.y}px, rgba(92,225,230,0.45), transparent 85%)`,
+                  background: 'radial-gradient(45px circle at var(--mx, -999px) var(--my, -999px), rgba(92,225,230,0.45), transparent 85%)',
                 }}
               />
             )}
             {isPlaying && (
-              <motion.div
-                animate={{ x: ['-100%', '100%'] }}
-                transition={{ repeat: Infinity, duration: 3.5, ease: 'easeInOut' }}
-                className="absolute inset-0 bg-gradient-to-r from-transparent via-[#5ce1e6]/30 to-transparent pointer-events-none blur-[1px] z-0"
-              />
+              <div className="music-shimmer absolute inset-0 bg-gradient-to-r from-transparent via-[#5ce1e6]/30 to-transparent pointer-events-none blur-[1px] z-0" />
             )}
 
             <motion.button
@@ -327,6 +245,7 @@ const MusicPlayer = ({ embedded = false }) => {
               whileTap={{ scale: 0.9 }}
               onClick={toggleMusic}
               title={isPlaying ? 'Pause Music' : 'Play Music'}
+              aria-label={isPlaying ? 'Pause music' : 'Play music'}
               className="relative z-20 shrink-0 flex items-center justify-center p-1.5 rounded-full cursor-pointer bg-transparent border-0 outline-none drop-shadow-[0_4px_12px_rgba(92,225,230,0.95)]"
             >
               <img
@@ -351,50 +270,39 @@ const MusicPlayer = ({ embedded = false }) => {
                   animate={{ opacity: 1, scale: 1, x: 0 }}
                   exit={{ opacity: 0, scale: 1, x: 0 }}
                   transition={{ duration: 0.25, ease: 'easeOut' }}
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setIsHovered(false);
-                    setMousePos({ x: -999, y: -999 });
-                    setTilt({ rotateX: 0, rotateY: 0 });
-                    setShowCard(true);
-                  }}
+                  onClick={openCard}
                   title="Click to open Music Controls"
+                  role="button"
+                  tabIndex={0}
+                  aria-label="Open music controls"
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      e.preventDefault();
+                      openCard(e);
+                    }
+                  }}
                   className="relative z-20 flex items-center gap-1 h-10 px-1.5 overflow-hidden rounded-full cursor-pointer"
                 >
-                  {waveformBars.map((bar, i) => {
-                    const dx = 72 + i * 12 - mousePos.x;
-                    const dy = 28 - mousePos.y;
-                    const dist = Math.hypot(dx, dy);
-                    const isInside = enableRepulsion && isHovered && dist < 45;
-                    const force = isInside ? 1 - dist / 45 : 0;
-                    return (
-                      <motion.span
-                        key={i}
-                        animate={{
-                          x: isInside ? (dx / (dist || 1)) * force * 22 : 0,
-                          y: isInside ? (dy / (dist || 1)) * force * 16 : 0,
-                          rotate: isInside ? (dx / (dist || 1)) * force * 25 : 0,
-                          height: [`${bar.min}px`, `${bar.max}px`, `${bar.min}px`],
-                        }}
-                        transition={{
-                          x: { type: 'spring', stiffness: 350, damping: 20 },
-                          y: { type: 'spring', stiffness: 350, damping: 20 },
-                          rotate: { type: 'spring', stiffness: 350, damping: 20 },
-                          height: { repeat: Infinity, duration: bar.speed, ease: 'easeInOut', delay: bar.delay },
-                        }}
-                        className="w-1.5 rounded-full bg-gradient-to-t from-[#5ce1e6] via-[#7de7eb] to-white shadow-[0_0_6px_#5ce1e6] shrink-0"
-                        style={{ height: `${(bar.min + bar.max) / 2}px` }}
+                  {waveformBars.map((bar, i) => (
+                    <span
+                      key={i}
+                      ref={(el) => {
+                        barRefs.current[i] = el;
+                      }}
+                      className="wave-slot shrink-0"
+                    >
+                      <span
+                        className="wave-bar w-1.5 rounded-full bg-gradient-to-t from-[#5ce1e6] via-[#7de7eb] to-white shadow-[0_0_6px_#5ce1e6]"
+                        style={barStyles[i]}
                       />
-                    );
-                  })}
+                    </span>
+                  ))}
                 </motion.div>
               </>
             )}
           </AnimatePresence>
         </motion.div>
           </>
-        )}
-    </AnimatePresence>
 
       {/* Floating Popup tooltip when autoplay is blocked by browser */}
       <AnimatePresence>

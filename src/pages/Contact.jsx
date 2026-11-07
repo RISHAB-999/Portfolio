@@ -1,9 +1,10 @@
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import emailjs from '@emailjs/browser';
 import { motion, AnimatePresence } from 'framer-motion';
 import ScrollLink from '../components/ScrollLink';
 import { contactPage, emailConfig } from '../data/contact';
 import { pageFade } from '../utils/motion';
+import { checkSubmission, HONEYPOT_FIELD } from '../utils/contactGuard';
 
 // Two-column Contact page: a message form (left) sitting over the page
 // background, and a solid dark identity card (right) listing the direct ways to
@@ -45,6 +46,9 @@ const ICONS = {
     </svg>
   ),
 };
+
+// Sends at most once per minute from the same browser (enforced by the EmailJS SDK).
+const SEND_THROTTLE_MS = 60_000;
 
 const Modal = ({ onClose, content, variant }) => (
   <motion.div
@@ -90,43 +94,71 @@ const Contact = () => {
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [isFailed, setIsFailed] = useState(false);
   const [isButtonDisabled, setIsButtonDisabled] = useState(false);
+  // Which failure copy to show: 'failure' | 'rateLimited' | 'invalid'
+  const [failureKind, setFailureKind] = useState('failure');
+  const startedAt = useRef(0);
+  useEffect(() => {
+    startedAt.current = Date.now();
+  }, []);
 
   const { eyebrow, heading, intro, fields, submitLabel, card, success, failure } = contactPage;
 
+  const showFailure = (kind) => {
+    document.body.classList.remove('cursor-loading');
+    setFailureKind(kind);
+    setIsFailed(true);
+    setIsSubmitted(false);
+  };
+
   const sendEmail = (e) => {
     e.preventDefault();
+    const el = form.current;
+    const check = checkSubmission({
+      name: el.name?.value,
+      reply_to: el.reply_to?.value,
+      message: el.message?.value,
+      honeypot: el[HONEYPOT_FIELD]?.value,
+      startedAt: startedAt.current,
+    });
+
+    // Bots get a quiet "success" so they learn nothing; nothing is sent.
+    if (!check.ok && check.reason === 'bot') {
+      setIsSubmitted(true);
+      setIsButtonDisabled(true);
+      return;
+    }
+    if (!check.ok) {
+      showFailure('invalid');
+      return;
+    }
+
     setIsButtonDisabled(true); // Disable the button during submission
     document.body.classList.add('cursor-loading');
 
-    // Populate the hidden 'title' variable for EmailJS subject line
-    const nameVal = form.current.name?.value || '';
-    if (form.current.title) {
-      form.current.title.value = `New message from ${nameVal}`;
-    }
+    // Write the cleaned values back so EmailJS sends exactly what was validated
+    // (single-line name/email, no control characters, length-capped).
+    el.name.value = check.values.name;
+    el.reply_to.value = check.values.reply_to;
+    el.message.value = check.values.message;
+    if (el.title) el.title.value = check.values.title;
 
-    try {
-      emailjs
-        .sendForm(emailConfig.serviceId, emailConfig.templateId, form.current, emailConfig.publicKey)
-        .then(
-          (result) => {
-            console.log(result.text);
-            document.body.classList.remove('cursor-loading');
-            setIsSubmitted(true); // Show the success modal
-            setIsFailed(false);
-          },
-          (error) => {
-            console.error(error.text);
-            document.body.classList.remove('cursor-loading');
-            setIsFailed(true); // Show the failure modal
-            setIsSubmitted(false);
-          }
-        );
-    } catch (error) {
-      console.error("EmailJS Error:", error);
-      document.body.classList.remove('cursor-loading');
-      setIsFailed(true);
-      setIsSubmitted(false);
-    }
+    emailjs
+      .sendForm(emailConfig.serviceId, emailConfig.templateId, el, {
+        publicKey: emailConfig.publicKey,
+        blockHeadless: true,
+        limitRate: { id: 'contact-form', throttle: SEND_THROTTLE_MS },
+      })
+      .then(
+        () => {
+          document.body.classList.remove('cursor-loading');
+          setIsSubmitted(true); // Show the success modal
+          setIsFailed(false);
+        },
+        (error) => {
+          console.error('Contact form send failed:', error?.status);
+          showFailure(error?.status === 429 ? 'rateLimited' : 'failure');
+        }
+      );
   };
 
   const handleModalClose = () => {
@@ -159,6 +191,7 @@ const Contact = () => {
                 <textarea
                   id={field.name}
                   name={field.name}
+                  maxLength={field.maxLength}
                   rows={5}
                   placeholder={field.placeholder}
                   className={`${FIELD} min-h-[140px] resize-y`}
@@ -169,6 +202,8 @@ const Contact = () => {
                   id={field.name}
                   type={field.type}
                   name={field.name}
+                  maxLength={field.maxLength}
+                  autoComplete={field.autoComplete}
                   placeholder={field.placeholder}
                   className={FIELD}
                   required
@@ -178,6 +213,14 @@ const Contact = () => {
           ))}
 
           <input type="hidden" name="title" value="" />
+          {/* Honeypot: off-screen, unfocusable, ignored by assistive tech. Humans
+              leave it empty; form-filling bots tend to fill it. */}
+          <div aria-hidden="true" className="absolute -left-[9999px] h-px w-px overflow-hidden">
+            <label>
+              Website
+              <input type="text" name={HONEYPOT_FIELD} tabIndex={-1} autoComplete="off" defaultValue="" />
+            </label>
+          </div>
 
           <motion.div whileHover={{ scale: 1.04 }} whileTap={{ scale: 0.96 }} className="mt-1 self-start">
             <button
@@ -265,7 +308,13 @@ const Contact = () => {
 
       <AnimatePresence>
         {isSubmitted && <Modal onClose={handleModalClose} content={success} variant="success" />}
-        {isFailed && <Modal onClose={handleModalClose} content={failure} variant="failure" />}
+        {isFailed && (
+          <Modal
+            onClose={handleModalClose}
+            content={contactPage[failureKind] || failure}
+            variant="failure"
+          />
+        )}
       </AnimatePresence>
     </motion.div>
   );

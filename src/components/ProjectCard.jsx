@@ -73,7 +73,8 @@ const MediaCard = ({ project }) => {
   };
 
   const handleButtonClick = (link) => {
-    window.open(link, '_blank');
+    // noopener: the opened page must not get a handle to this tab (reverse tabnabbing)
+    window.open(link, '_blank', 'noopener,noreferrer');
     setButtonClicked(true);
   };
 

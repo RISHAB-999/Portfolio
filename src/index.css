@@ -802,6 +802,148 @@ section[class*="hover:"] *:active, div[class*="hover:"] *:active, article[class*
   50% { opacity: 0; }
 }
 
+/* ── Motion (swarm) toggle in the navbar ──────────────────────────────
+   Sits on the navbar's glass, so it reuses the glass gradient/border/inset
+   highlight look WITHOUT its own backdrop-filter (a nested backdrop filter
+   would re-blur an already blurred area for no visible gain).
+   Display is left to Tailwind (hidden / inline-flex) per breakpoint. */
+.motion-toggle {
+  position: relative;
+  align-items: center;
+  gap: 0.4rem;
+  height: 30px;
+  padding: 0 0.75rem 0 0.6rem;
+  border-radius: 9999px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  color: #fff;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.16) 0%, rgba(255, 255, 255, 0.03) 60%, rgba(255, 255, 255, 0.07) 100%);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  box-shadow: inset 0 1px 1.5px rgba(255, 255, 255, 0.55), 0 2px 8px rgba(0, 0, 0, 0.25);
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.8);
+  white-space: nowrap;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  transition: color 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease, background-color 0.15s ease, transform 0.12s ease;
+}
+/* Bigger invisible hit area for touch (the visible chip stays compact). */
+.motion-toggle::after {
+  content: '';
+  position: absolute;
+  inset: -8px -4px;
+}
+.motion-toggle-icon {
+  width: 14px;
+  height: 14px;
+  fill: currentColor;
+  filter: drop-shadow(0 0 4px rgba(92, 225, 230, 0.6));
+}
+@media (hover: hover) {
+  .motion-toggle:hover {
+    color: #5ce1e6;
+    border-color: rgba(92, 225, 230, 0.6);
+    box-shadow: inset 0 1px 1.5px rgba(255, 255, 255, 0.55), 0 0 12px rgba(92, 225, 230, 0.35);
+  }
+}
+.motion-toggle:active {
+  transform: scale(0.94);
+}
+.motion-toggle:focus-visible {
+  outline: 2px solid #5ce1e6;
+  outline-offset: 3px;
+}
+.motion-toggle[aria-pressed='true'] {
+  color: #5ce1e6;
+  background-color: rgba(92, 225, 230, 0.16);
+  border-color: rgba(92, 225, 230, 0.75);
+  box-shadow: inset 0 1px 1.5px rgba(255, 255, 255, 0.55), 0 0 14px rgba(92, 225, 230, 0.55);
+}
+
+/* ── Music player: compositor-only loops ─────────────────────────────
+   These replace JS (framer-motion) infinite animations that animated
+   `height` / ran a rAF per element. transform/opacity keyframes run on
+   the compositor, so they no longer repaint the glass capsule (and its
+   SVG backdrop filter) every frame. Visual timing is unchanged. */
+.wave-bar {
+  display: block;
+  height: var(--bar-max);
+  transform-origin: center;
+  animation: waveBar var(--bar-speed) ease-in-out var(--bar-delay) infinite;
+  will-change: transform;
+}
+@keyframes waveBar {
+  0%, 100% { transform: scaleY(var(--bar-min-ratio)); }
+  50% { transform: scaleY(1); }
+}
+/* Wrapper that carries the hover "repulsion" offset (set from JS, no React). */
+.wave-slot {
+  display: flex;
+  align-items: center;
+  transition: transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+.music-shimmer {
+  animation: musicShimmer 3.5s ease-in-out infinite;
+  will-change: transform;
+}
+@keyframes musicShimmer {
+  from { transform: translateX(-100%); }
+  to { transform: translateX(100%); }
+}
+.music-ring-spin {
+  animation: musicRingSpin 10s linear infinite;
+  will-change: transform;
+}
+/* While the music card covers the capsule its loops have nothing to show. */
+.music-loops-paused .wave-bar,
+.music-loops-paused .music-shimmer {
+  animation-play-state: paused;
+}
+@keyframes musicRingSpin {
+  to { transform: rotate(360deg); }
+}
+
+/* Glass used INSIDE an already-glass surface (music card controls). Same
+   gradient / border / highlights as .liquid-glass, minus the second
+   backdrop-filter: the area behind it is already blurred by the card. */
+.liquid-glass-inner {
+  background: linear-gradient(
+    135deg,
+    rgba(255, 255, 255, 0.15) 0%,
+    rgba(255, 255, 255, 0.02) 30%,
+    rgba(255, 255, 255, 0.02) 70%,
+    rgba(255, 255, 255, 0.06) 100%
+  );
+  border-radius: 20px;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  background-clip: padding-box;
+  box-shadow:
+    0 12px 32px rgba(0, 0, 0, 0.25),
+    inset 0 1.5px 2px rgba(255, 255, 255, 0.65),
+    inset 0 -1.5px 2px rgba(0, 0, 0, 0.25),
+    inset 0 0 12px rgba(255, 255, 255, 0.1);
+  position: relative;
+}
+/* Slider thumbs live inside the card too — no backdrop blur needed there. */
+.liquid-glass .liquid-slider::-webkit-slider-thumb {
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+}
+.liquid-glass .liquid-slider::-moz-range-thumb {
+  backdrop-filter: none;
+}
+
+/* Desktop HUD (coords + music) — on tablet-width screens the centred navbar
+   reaches the left edge, so dock the HUD just below it instead of under it. */
+.hud-dock {
+  top: 1rem;
+}
+@media (min-width: 768px) and (max-width: 1059px) {
+  .hud-dock {
+    top: 4.5rem;
+  }
+}
+
 /* ── Accessibility: prefers-reduced-motion ────────────────────────────
    Only fires for users who've explicitly opted out of animations via
    their OS accessibility settings. Normal visitors still see every
@@ -809,8 +951,124 @@ section[class*="hover:"] *:active, div[class*="hover:"] *:active, article[class*
 @media (prefers-reduced-motion: reduce) {
   .hdr-star,
   .pause-led,
-  .cursor-blink {
+  .cursor-blink,
+  .wave-bar,
+  .music-shimmer,
+  .music-ring-spin {
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
+  }
+  .wave-slot,
+  .motion-toggle {
+    transition: none;
+  }
+}
+/* ── First-visit loading screen hand-off (src/features/boot/bootLoader.js) ──
+   <html data-boot> walks loading → header → hero, then is removed:
+   the logo lands in the header and the header slides open to the right, then
+   the name comes out of the screen word by word, then the rest of the hero
+   fades in. */
+.boot-word-in {
+  display: inline-block;
+}
+/* fully covered by the loader: skip painting the page underneath */
+html[data-boot-cover] #root {
+  visibility: hidden;
+}
+html[data-boot='loading'] [data-brand-logo] {
+  visibility: hidden;
+}
+/* the header opens from the logo: a pill-shaped window (elliptical right end,
+   a little taller than the bar so the logo's glow isn't cut) sliding right */
+[data-boot-nav] {
+  --boot-nav-from: 84px; /* px-6 + 48px logo + a little */
+  --boot-r: 22px;
+  --boot-rv: 34px;
+}
+@media (min-width: 768px) {
+  [data-boot-nav] {
+    --boot-nav-from: 112px; /* px-10 + 60px logo + a little */
+    --boot-r: 26px;
+    --boot-rv: 38px;
+  }
+}
+html[data-boot='loading'] [data-boot-nav] {
+  clip-path: inset(-12px calc(100% - var(--boot-nav-from)) -12px -12px round 0 var(--boot-r) var(--boot-r) 0 / 0 var(--boot-rv) var(--boot-rv) 0);
+}
+html[data-boot='header'] [data-boot-nav],
+html[data-boot='hero'] [data-boot-nav] {
+  animation: boot-nav-open 1.5s cubic-bezier(0.33, 0, 0.15, 1) both;
+}
+@keyframes boot-nav-open {
+  from {
+    clip-path: inset(-12px calc(100% - var(--boot-nav-from)) -12px -12px round 0 var(--boot-r) var(--boot-r) 0 / 0 var(--boot-rv) var(--boot-rv) 0);
+  }
+  to {
+    clip-path: inset(-12px -12px -12px -12px round 0 var(--boot-r) var(--boot-r) 0 / 0 var(--boot-rv) var(--boot-rv) 0);
+  }
+}
+/* the header's contents drift in one after another as the bar opens
+   (class selectors only: tag selectors here would make every span/li on the
+   page restyle whenever <html data-boot> changes) */
+html[data-boot='loading'] .boot-nav-item {
+  opacity: 0;
+}
+html[data-boot='header'] .boot-nav-item,
+html[data-boot='hero'] .boot-nav-item {
+  animation: boot-nav-item 0.8s cubic-bezier(0.22, 1, 0.36, 1) both;
+  animation-delay: calc(250ms + var(--n, 0) * 140ms);
+}
+@keyframes boot-nav-item {
+  from {
+    opacity: 0;
+    transform: translateX(-14px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+/* the name comes out of the screen: from far away, past you, then settles */
+html[data-boot='loading'] .boot-word-in,
+html[data-boot='header'] .boot-word-in {
+  opacity: 0;
+}
+html[data-boot='hero'] .boot-word-in {
+  animation: boot-out-of-screen 1s cubic-bezier(0.2, 0.7, 0.2, 1) both;
+  animation-delay: calc(var(--i, 0) * 160ms);
+}
+@keyframes boot-out-of-screen {
+  0% {
+    opacity: 0;
+    transform: perspective(700px) translateZ(-500px);
+    filter: blur(6px);
+  }
+  55% {
+    opacity: 1;
+    transform: perspective(700px) translateZ(140px);
+    filter: blur(0);
+  }
+  100% {
+    opacity: 1;
+    transform: none;
+    filter: none;
+  }
+}
+html[data-boot='loading'] .boot-after,
+html[data-boot='header'] .boot-after {
+  opacity: 0;
+}
+html[data-boot='hero'] .boot-after {
+  animation: boot-fade 0.7s ease-out both;
+  animation-delay: calc(800ms + var(--i, 0) * 120ms);
+}
+@keyframes boot-fade {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
   }
 }

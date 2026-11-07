@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
+import { subscribeTime } from '../utils/musicAudio';
 import { motion, AnimatePresence } from 'framer-motion';
 import musicOnIcon from '../assets/music on.png';
 import musicOffIcon from '../assets/music_off.png';
@@ -14,11 +15,10 @@ import soundIcon from '../assets/Sound.png';
 import LiquidGlassFilter from './LiquidGlassFilter';
 
 const MusicCard = ({
+  open = true,
   isPlaying,
   volume,
   currentTrackIndex,
-  currentTime,
-  duration,
   toggleMusic,
   handleVolumeChange,
   handleSeek,
@@ -30,9 +30,24 @@ const MusicCard = ({
   const [showVolumeSlider, setShowVolumeSlider] = useState(false);
   const currentTrack = playlist[currentTrackIndex] || playlist[0];
   const cardRef = useRef(null);
-
-  // Click Outside to Minimize/Close Card
+  // Playback position is only tracked while the card is open (it's the only UI
+  // that shows it), so the rest of the player never re-renders on timeupdate.
+  const [{ currentTime, duration }, setTime] = useState({ currentTime: 0, duration: 0 });
   useEffect(() => {
+    if (!open) return undefined;
+    return subscribeTime((t, d) => setTime((prev) => (prev.currentTime === t && prev.duration === d ? prev : { currentTime: t, duration: d })));
+  }, [open]);
+
+  // Reopening starts fresh, as it did when the card was re-mounted each time.
+  useEffect(() => {
+    if (open) return;
+    setShowPlaylist(false);
+    setShowVolumeSlider(false);
+  }, [open]);
+
+  // Click Outside to Minimize/Close Card (only while open)
+  useEffect(() => {
+    if (!open) return undefined;
     const handleClickOutside = (e) => {
       if (
         cardRef.current &&
@@ -51,7 +66,7 @@ const MusicCard = ({
       clearTimeout(timer);
       document.removeEventListener('pointerdown', handleClickOutside);
     };
-  }, [onClose]);
+  }, [open, onClose]);
 
   const handleStopAndClose = (e) => {
     if (isPlaying) {
@@ -72,10 +87,14 @@ const MusicCard = ({
       <LiquidGlassFilter id="music-card-glass" targetRef={cardRef} options={{ fps: 60, refractionScale: 0.2, specularOpacity: 0 }} />
     <motion.div
       ref={cardRef}
-      initial={{ opacity: 0, scale: 0.92 }}
-      animate={{ opacity: 1, scale: 1 }}
-      exit={{ opacity: 0, scale: 0.95 }}
+      initial={false}
+      animate={
+        open
+          ? { opacity: 1, scale: 1, visibility: 'visible' }
+          : { opacity: 0, scale: 0.95, transitionEnd: { visibility: 'hidden' } }
+      }
       transition={{ duration: 0.12, ease: 'easeOut' }}
+      aria-hidden={!open || undefined}
       style={{ transformOrigin: isMobileNav ? 'bottom center' : 'top left', '--svg-glass-url': 'url(#music-card-glass)' }}
       className={`relative w-[min(92vw,310px)] ${
         isMobileNav ? 'p-2.5 text-xs' : 'p-3.5 sm:p-4'
@@ -88,7 +107,7 @@ const MusicCard = ({
       <div className={`flex items-center justify-between ${isMobileNav ? 'mb-2 pb-1.5' : 'mb-3 pb-2'} border-b border-[#5ce1e6]/25`}>
         <div className="flex items-center gap-2">
           <span className="relative flex h-2.5 w-2.5">
-            <span className={`animate-ping absolute inline-flex h-full w-full rounded-full ${isPlaying ? 'bg-[#5ce1e6]' : 'bg-gray-400'} opacity-75`} />
+            <span className={`${open ? 'animate-ping' : ''} absolute inline-flex h-full w-full rounded-full ${isPlaying ? 'bg-[#5ce1e6]' : 'bg-gray-400'} opacity-75`} />
             <span className={`relative inline-flex rounded-full h-2.5 w-2.5 ${isPlaying ? 'bg-[#5ce1e6]' : 'bg-gray-400'}`} />
           </span>
           <span className="text-[10px] font-bold tracking-widest text-[#5ce1e6] uppercase">
@@ -113,12 +132,8 @@ const MusicCard = ({
           title="Click to choose another song"
           className="relative shrink-0 cursor-pointer group outline-none border-0 bg-transparent"
         >
-          {isPlaying && (
-            <motion.div
-              animate={{ rotate: 360 }}
-              transition={{ repeat: Infinity, duration: 10, ease: 'linear' }}
-              className="absolute -inset-1 rounded-2xl bg-gradient-to-tr from-[#5ce1e6] to-cyan-400 opacity-60 blur-[2px]"
-            />
+          {isPlaying && open && (
+            <div className="music-ring-spin absolute -inset-1 rounded-2xl bg-gradient-to-tr from-[#5ce1e6] to-cyan-400 opacity-60 blur-[2px]" />
           )}
           <img
             src={currentTrack.cover}
@@ -190,7 +205,7 @@ const MusicCard = ({
       </AnimatePresence>
 
       {/* Interactive Music Time Scrubber / Seek Bar (Liquid Glass Slider) */}
-      <div className={`flex flex-col gap-1 ${isMobileNav ? 'mb-2 p-1.5' : 'mb-2.5 p-2'} bg-white/5 backdrop-blur-md rounded-xl border border-white/10`}>
+      <div className={`flex flex-col gap-1 ${isMobileNav ? 'mb-2 p-1.5' : 'mb-2.5 p-2'} bg-white/5 rounded-xl border border-white/10`}>
         <div className="flex items-center justify-between text-[10px] font-mono text-gray-300 font-bold px-0.5">
           <span>{formatTime(currentTime)}</span>
           <span>{formatTime(duration)}</span>
@@ -208,7 +223,7 @@ const MusicCard = ({
       </div>
 
       {/* Audio Controls Bar (Liquid Glass buttons matching main card aesthetic) */}
-      <div className="flex items-center justify-between gap-1 p-1.5 liquid-glass !rounded-2xl">
+      <div className="flex items-center justify-between gap-1 p-1.5 liquid-glass-inner !rounded-2xl">
         {/* Prev, Play-Pause, Next Navigation Buttons */}
         <div className="flex items-center gap-1.5">
           <motion.button
@@ -216,7 +231,7 @@ const MusicCard = ({
             whileTap={{ y: 1, scale: 0.92 }}
             onClick={() => changeTrack(currentTrackIndex - 1)}
             title="Previous Track"
-            className="w-7 h-7 flex items-center justify-center rounded-xl liquid-glass text-white hover:text-[#5ce1e6] cursor-pointer text-[10px] font-bold transition-all"
+            className="w-7 h-7 flex items-center justify-center rounded-xl liquid-glass-inner text-white hover:text-[#5ce1e6] cursor-pointer text-[10px] font-bold transition-all"
           >
             <img src={previousIcon} alt="Previous" className="w-3.5 h-3.5 object-contain" />
           </motion.button>
@@ -226,10 +241,10 @@ const MusicCard = ({
             whileTap={{ y: 1, scale: 0.92 }}
             onClick={toggleMusic}
             title={isPlaying ? 'Pause' : 'Play'}
-            className={`w-8 h-8 flex items-center justify-center rounded-full backdrop-blur-md cursor-pointer text-xs font-bold transition-all ${
+            className={`w-8 h-8 flex items-center justify-center rounded-full cursor-pointer text-xs font-bold transition-all ${
               isPlaying
                 ? 'bg-black/20 border border-[#5ce1e6]/40 shadow-[0_0_12px_rgba(92,225,230,0.3),inset_0_0_8px_rgba(92,225,230,0.2)]'
-                : 'liquid-glass text-[#5ce1e6] hover:text-white'
+                : 'liquid-glass-inner text-[#5ce1e6] hover:text-white'
             }`}
           >
             <img src={isPlaying ? playIcon : pauseIcon} alt={isPlaying ? 'Pause' : 'Play'} className={`w-4 h-4 object-contain ${!isPlaying && 'ml-0.5'}`} />
@@ -240,7 +255,7 @@ const MusicCard = ({
             whileTap={{ y: 1, scale: 0.92 }}
             onClick={() => changeTrack(currentTrackIndex + 1)}
             title="Next Track"
-            className="w-7 h-7 flex items-center justify-center rounded-xl liquid-glass text-white hover:text-[#5ce1e6] cursor-pointer text-[10px] font-bold transition-all"
+            className="w-7 h-7 flex items-center justify-center rounded-xl liquid-glass-inner text-white hover:text-[#5ce1e6] cursor-pointer text-[10px] font-bold transition-all"
           >
             <img src={nextIcon} alt="Next" className="w-3.5 h-3.5 object-contain" />
           </motion.button>
@@ -279,7 +294,7 @@ const MusicCard = ({
             whileTap={{ y: 1, scale: 0.92 }}
             onClick={() => setShowVolumeSlider((prev) => !prev)}
             title={showVolumeSlider ? 'Close Volume Slider' : 'Open Volume Slider'}
-            className="w-7 h-7 rounded-xl backdrop-blur-md bg-cyan-400/15 hover:bg-cyan-400/30 border-t border-l border-[#5ce1e6]/90 border-b border-r border-[#5ce1e6]/30 text-[#5ce1e6] hover:text-white shadow-[0_2px_8px_rgba(0,0,0,0.4),0_0_8px_rgba(92,225,230,0.3),inset_0_1px_2px_rgba(255,255,255,0.6)] transition-all cursor-pointer text-[10px] flex items-center justify-center flex-shrink-0"
+            className="w-7 h-7 rounded-xl bg-cyan-400/15 hover:bg-cyan-400/30 border-t border-l border-[#5ce1e6]/90 border-b border-r border-[#5ce1e6]/30 text-[#5ce1e6] hover:text-white shadow-[0_2px_8px_rgba(0,0,0,0.4),0_0_8px_rgba(92,225,230,0.3),inset_0_1px_2px_rgba(255,255,255,0.6)] transition-all cursor-pointer text-[10px] flex items-center justify-center flex-shrink-0"
           >
             <img src={soundIcon} alt="Sound" className={`w-3.5 h-3.5 object-contain ${volume === 0 ? 'opacity-40 grayscale' : ''}`} />
           </motion.button>

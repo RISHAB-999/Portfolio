@@ -297,11 +297,13 @@ const AppContent = () => {
 
 
 
+  // data-swarm-bg marks scenery (base colour, scene GIFs, overlays, sky, cave):
+  // the Motion swarm leaves it on screen and builds everything else over it.
   return (
-    <div className="relative w-full min-h-screen bg-primary overflow-x-hidden">
+    <div className="relative w-full min-h-screen bg-primary overflow-x-hidden" data-swarm-bg="">
       {/* Global Mouse Tracker HUD + Music Player — DOM ref for coords avoids re-renders */}
       {!isMobile && (
-        <div style={{ position: 'fixed', top: '1rem', left: '1rem', zIndex: 999, display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: '4px', pointerEvents: 'none' }}>
+        <div className="hud-dock" style={{ position: 'fixed', left: '1rem', zIndex: 999, display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: '4px', pointerEvents: 'none' }}>
           <div className="font-source-code-pro text-[10px] text-[#5ce1e6] tracking-widest bg-[#06080e]/60 backdrop-blur-sm px-2 py-1 rounded border border-[#5ce1e6]/30 pixel-shadow">
             <span ref={coordsRef}>X:&nbsp;&nbsp;&nbsp;&nbsp;0&nbsp;&nbsp;Y:&nbsp;&nbsp;&nbsp;&nbsp;0</span>
           </div>
@@ -326,6 +328,7 @@ const AppContent = () => {
           ref={kirbyRef}
           src={kirbyfloating}
           alt="Kirby Floating"
+          data-swarm="skip"
           width="64"
           height="64"
           decoding="async"
@@ -336,16 +339,16 @@ const AppContent = () => {
 
       {/* Conditionally render animations and teal div on home page */}
       { !isResumePage && showOverlay && (
-        <div className="absolute inset-0 bg-gradient-to-br from-purple-800 to-teal-400 opacity-50" style={{ zIndex: 1 }} />
+        <div className="absolute inset-0 bg-gradient-to-br from-purple-800 to-teal-400 opacity-50" style={{ zIndex: 1 }} data-swarm-bg="" />
       )}
 
       {/* Optional per-route darkening veil (set `darken` in siteConfig). Sits above
           the gradient overlay but below page content so the whole scene reads darker. */}
       { !isResumePage && darken && (
-        <div className="absolute inset-0" style={{ backgroundColor: `rgba(6,8,18,${darken})`, zIndex: 2 }} />
+        <div className="absolute inset-0" style={{ backgroundColor: `rgba(6,8,18,${darken})`, zIndex: 2 }} data-swarm-bg="" />
       )}
 
-      <div className={`${isResumePage ? 'bg-transparent' : 'bg-primary'} min-h-screen w-full flex flex-col relative`}>
+      <div className={`${isResumePage ? 'bg-transparent' : 'bg-primary'} min-h-screen w-full flex flex-col relative`} data-swarm-bg="">
         {/* Main Content Background — only current + fading-out previous are mounted */}
         {mountedBgs.map((bgSrc) => {
           const isResumeBg = bgSrc === pageConfig['/resume']?.background;
@@ -353,6 +356,7 @@ const AppContent = () => {
           return (
             <div
               key={bgSrc}
+              data-swarm-bg=""
               className={
                 isResumeBg
                   ? 'fixed inset-0 z-0'
@@ -375,6 +379,7 @@ const AppContent = () => {
         
         {/* Sky gradient & stars */}
         <div
+          data-swarm-bg=""
           className={[styles.flexCenter, 'flex-shrink-0 relative w-full h-[100px]'].join(' ')}
           style={{
             zIndex: 10,
@@ -387,7 +392,7 @@ const AppContent = () => {
           }}
         >
           {/* Flickering star field behind the nav */}
-          <div aria-hidden="true" className="absolute inset-0 overflow-hidden" style={{ zIndex: 1 }}>
+          <div aria-hidden="true" className="absolute inset-0 overflow-hidden" style={{ zIndex: 1 }} data-swarm-bg="deep">
             {headerStars.map((s, i) => (
               <span
                 key={i}
@@ -480,6 +485,7 @@ const AppContent = () => {
         <div className={[styles]}>
           <div ref={postFooterRef} >
             <div
+              data-swarm-bg=""
               className={['bg-primary', styles.flexStart].join(' ')}
               style={{
                 backgroundImage: `url(${caveBG})`,
@@ -488,7 +494,7 @@ const AppContent = () => {
                 backgroundAttachment: 'fixed',
               }}
             >
-              <div className="absolute inset-0 bg-gradient-to-br from-purple-800 to-teal-400 opacity-50" style={{ zIndex: 0 }} />
+              <div className="absolute inset-0 bg-gradient-to-br from-purple-800 to-teal-400 opacity-50" style={{ zIndex: 0 }} data-swarm-bg="" />
 
               <div className="relative flex flex-col w-full items-center">
                 {/* Stalactites hang from the dirt footer into the cave, fading from
@@ -499,7 +505,7 @@ const AppContent = () => {
                 {/* Extra dark veil to fade the cave backdrop a touch more. Scoped to this
                     post-footer wrapper (which is `relative`) so it does NOT leak up and
                     darken the hero / mountain background above. */}
-                <div className="absolute inset-0 bg-[#08040c]/35" style={{ zIndex: 0 }} />
+                <div className="absolute inset-0 bg-[#08040c]/35" style={{ zIndex: 0 }} data-swarm-bg="" />
                 {/* Match the About page's content width so the home post-footer
                     shares the same horizontal margins (w-[min(92vw,1024px)]). */}
                 <div className="relative mx-auto w-[min(92vw,1024px)]" style={{ zIndex: 10 }}>

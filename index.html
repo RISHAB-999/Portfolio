@@ -9,7 +9,10 @@
     <title>Rishab's Portfolio</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=Pixelify+Sans:wght@400..700&family=VT323&display=swap" rel="stylesheet" media="print" onload="this.media='all'" />
+    <!-- Fetch the pixel fonts' stylesheet straight away without blocking render;
+         src/main.jsx applies it. (It used an inline onload="" handler before, which the
+         Content-Security-Policy added at build time in vite.config.js would block.) -->
+    <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Pixelify+Sans:wght@400..700&family=VT323&display=swap" />
   </head>
   <body>
     <div id="root"></div>

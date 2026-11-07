@@ -6,6 +6,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { close, menu } from '../assets';
 import { brand, navLinks, socialMedia } from '../data/siteConfig';
 import LiquidGlassFilter from './LiquidGlassFilter';
+import { MotionButton } from '../features/swarm';
 
 const linkVariants = {
   hover: {
@@ -133,6 +134,7 @@ const Navbar = () => {
         <LiquidGlassFilter id="navbar-glass" targetRef={navRef} options={{ fps: 60, refractionScale: 0.1 }} />
       <motion.nav
         ref={navRef}
+        data-boot-nav
         onMouseMove={handleMouseMove}
         onMouseEnter={() => setIsHovered(true)}
         onMouseLeave={() => {
@@ -151,32 +153,39 @@ const Navbar = () => {
           }}
         />
 
-        {/* Brand Logo directly inside navbar (pops cleanly out over top/bottom of slim card) */}
-        <motion.div
-          whileHover={{ scale: 1.3, y: -1 }}
-          whileTap={{ scale: 1.2 }}
-          onClick={() => handleNavigation('home')}
-          className="flex items-center cursor-pointer select-none z-30 relative"
-          title="Home"
-        >
-          <img
-            src={brand.logo}
-            alt={brand.alt}
-            width="48"
-            height="48"
-            className="h-12 sm:h-15 max-w-none object-contain drop-shadow-[0_0_16px_rgba(92,225,230,0.9)] transition-all duration-200"
-          />
-        </motion.div>
+        <div className="flex items-center gap-4 z-30 relative">
+          {/* Brand Logo directly inside navbar (pops cleanly out over top/bottom of slim card) */}
+          <motion.div
+            whileHover={{ scale: 1.3, y: -1 }}
+            whileTap={{ scale: 1.2 }}
+            onClick={() => handleNavigation('home')}
+            className="flex items-center cursor-pointer select-none z-30 relative"
+            title="Home"
+          >
+            <img
+              src={brand.logo}
+              alt={brand.alt}
+              data-brand-logo
+              width="48"
+              height="48"
+              className="h-12 sm:h-15 max-w-none object-contain drop-shadow-[0_0_16px_rgba(92,225,230,0.9)] transition-all duration-200"
+            />
+          </motion.div>
+
+          {/* Swarm toggle (desktop/tablet) — sits in the free space beside the logo */}
+          <MotionButton className="boot-nav-item hidden sm:inline-flex" />
+        </div>
 
         {/* Desktop Navigation Links */}
         <ul className="list-none sm:flex text-xs hidden items-center gap-8 sm:gap-12 z-10">
-          {navLinks.map((nav) => (
+          {navLinks.map((nav, n) => (
             <motion.li
               key={nav.id}
+              style={{ '--n': n + 1 }}
               variants={linkVariants}
               whileHover="hover"
               whileTap="tap"
-              className="font-source-code-pro font-semibold cursor-pointer text-base sm:text-lg text-white hover:text-[#5ce1e6] transition-colors"
+              className="boot-nav-item font-source-code-pro font-semibold cursor-pointer text-base sm:text-lg text-white hover:text-[#5ce1e6] transition-colors"
               onClick={() => handleNavigation(nav.id)}
             >
               <span className="text-white hover:text-[#5ce1e6] transition-colors drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]">
@@ -187,10 +196,12 @@ const Navbar = () => {
         </ul>
 
         {/* Mobile Hamburger button */}
-        <div className="sm:hidden flex items-center">
+        <div className="sm:hidden flex items-center gap-3">
+          <MotionButton className="boot-nav-item inline-flex sm:hidden" />
           <button
             type="button"
-            className="relative z-10 p-1"
+            className="boot-nav-item relative z-10 p-1"
+            style={{ '--n': 2 }}
             aria-label={toggle ? 'Close menu' : 'Open menu'}
             aria-expanded={toggle}
             onClick={() => setToggle((v) => !v)}

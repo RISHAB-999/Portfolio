@@ -9,6 +9,9 @@ const LiquidGlassFilter = ({ id, targetRef, options = {} }) => {
   const optionsKey = JSON.stringify(options);
   const isFirstMount = useRef(true);
 
+  // Keep this a passive useEffect: the filter is rendered *before* its target
+  // element in JSX, so during layout effects targetRef.current isn't attached
+  // yet and the filter would never be generated (the glass silently disappears).
   useEffect(() => {
     if (!targetRef?.current) return;
 

@@ -16,9 +16,10 @@ export const contactPage = {
 
   // Form fields. `name` must match the EmailJS template variables.
   fields: [
-    { label: 'Name', name: 'name', type: 'text', placeholder: 'Your name', multiline: false },
-    { label: 'Email', name: 'reply_to', type: 'email', placeholder: 'you@email.com', multiline: false },
-    { label: 'Message', name: 'message', type: 'text', placeholder: "What's on your mind?", multiline: true },
+    // `maxLength` mirrors FIELD_LIMITS in utils/contactGuard.js.
+    { label: 'Name', name: 'name', type: 'text', placeholder: 'Your name', multiline: false, maxLength: 80, autoComplete: 'name' },
+    { label: 'Email', name: 'reply_to', type: 'email', placeholder: 'you@email.com', multiline: false, maxLength: 254, autoComplete: 'email' },
+    { label: 'Message', name: 'message', type: 'text', placeholder: "What's on your mind?", multiline: true, maxLength: 4000 },
   ],
   submitLabel: 'Send',
 
@@ -46,6 +47,17 @@ export const contactPage = {
   failure: {
     title: 'Failed to Send',
     body: 'There was an issue sending your message. Please try again later.',
+    close: 'Close',
+  },
+  // Shown when the same browser sends again within a minute (EmailJS limitRate).
+  rateLimited: {
+    title: 'Slow down a little',
+    body: 'Your last message just went out. Please wait a minute before sending another.',
+    close: 'Close',
+  },
+  invalid: {
+    title: 'Check your details',
+    body: 'Please add your name, a valid email address and a message.',
     close: 'Close',
   },
 };
