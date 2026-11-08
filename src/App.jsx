@@ -224,10 +224,12 @@ const AppContent = () => {
     let start;
     let raf;
 
+    // Moved purely with transform (no left/top writes, so no layout per frame).
     // Place him immediately so there's no first-frame flash at the origin.
-    el.style.left = `${pos.x}px`;
-    el.style.top = `${pos.y}px`;
-    el.style.transform = 'translate(-50%, -50%)';
+    const html = document.documentElement;
+    el.style.left = '0px';
+    el.style.top = '0px';
+    el.style.transform = `translate3d(${pos.x}px, ${pos.y}px, 0) translate(-50%, -50%)`;
 
     const attract = (x, y) => {
       target.x = x;
@@ -249,6 +251,11 @@ const AppContent = () => {
     window.addEventListener('scroll', onScroll, { passive: true });
 
     const frame = (now) => {
+      // paused while the first-visit loading screen covers the page
+      if (html.hasAttribute('data-boot-cover')) {
+        raf = requestAnimationFrame(frame);
+        return;
+      }
       if (start === undefined) start = now;
       const t = now - start;
       const W = window.innerWidth;
@@ -276,10 +283,8 @@ const AppContent = () => {
       const sx = (1 + stretch) * puff;
       const sy = (1 - stretch) * puff;
 
-      el.style.left = `${pos.x}px`;
-      el.style.top = `${pos.y}px`;
       el.style.transform =
-        `translate(-50%, -50%) rotate(${rot.toFixed(2)}deg) scale(${sx.toFixed(3)}, ${sy.toFixed(3)})`;
+        `translate3d(${pos.x.toFixed(1)}px, ${pos.y.toFixed(1)}px, 0) translate(-50%, -50%) rotate(${rot.toFixed(2)}deg) scale(${sx.toFixed(3)}, ${sy.toFixed(3)})`;
 
       raf = requestAnimationFrame(frame);
     };

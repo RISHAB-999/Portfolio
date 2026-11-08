@@ -5,7 +5,7 @@
 // backdrop (stars / piano lines) and calls draw() on top.
 
 import logoUrl from '../../assets/Rishablogo_pixel_art.png';
-import { createCoffeeArt, ART_W, ART_H, ART_LINE_X, ART_LINE_W, ART_LINE_Y } from './coffeeLoader';
+import { createCoffeeArt, makeCanvas, ART_W, ART_H, ART_LINE_X, ART_LINE_W, ART_LINE_Y } from './coffeeLoader';
 
 export const COFFEE_CYCLE = 7000; // one full loop of the coffee cup (the original is 8s)
 
@@ -16,21 +16,36 @@ export function createLoaderScene() {
   // the site's own pixel-art logo; the navbar shows the same file, so it is
   // usually already cached
   let logo = null;
+  let logoReady = false;
   let logoSized = null;
 
   function loadLogo() {
-    if (logo || typeof Image === 'undefined') return;
+    if (logo) return;
+    if (typeof Image === 'undefined') {
+      // inside a worker: fetch and decode it to a bitmap
+      logo = true;
+      fetch(logoUrl)
+        .then((r) => r.blob())
+        .then((b) => createImageBitmap(b))
+        .then((bmp) => {
+          logo = bmp;
+          logoReady = true;
+        })
+        .catch(() => {});
+      return;
+    }
     logo = new Image();
     logo.decoding = 'async';
+    logo.addEventListener('load', () => { logoReady = true; }, { once: true });
     logo.src = logoUrl;
+    if (logo.complete && logo.naturalWidth) logoReady = true;
   }
 
   // the 1024px logo, scaled once to the size it is shown at (not every frame)
   function logoSprite(size) {
-    if (!logo || !logo.complete || !logo.naturalWidth || size < 1) return null;
+    if (!logoReady || size < 1) return null;
     if (!logoSized || logoSized.width !== size) {
-      logoSized = document.createElement('canvas');
-      logoSized.width = logoSized.height = size;
+      logoSized = makeCanvas(size, size);
       const g = logoSized.getContext('2d');
       g.imageSmoothingQuality = 'high';
       g.drawImage(logo, 0, 0, size, size);

@@ -19,7 +19,8 @@ const CSP = [
   "base-uri 'self'",
   "form-action 'self'",
   "frame-src 'none'",
-  "worker-src 'none'",
+  // the first-visit loading screen draws in a worker of our own (same origin)
+  "worker-src 'self'",
   "manifest-src 'self'",
   'upgrade-insecure-requests',
 ].join('; ');

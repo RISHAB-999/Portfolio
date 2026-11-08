@@ -1,8 +1,9 @@
-import React from 'react';
+import React, { startTransition } from 'react';
 import ReactDOM from 'react-dom/client';
 import App from './App.jsx';
 import './index.css';
 import { startBootLoader, isHomeRoute } from './features/boot/bootLoader';
+import { swarmStore, motionWasOn } from './features/swarm/swarmStore';
 
 // Clickjacking defence. GitHub Pages can't send X-Frame-Options or a CSP
 // frame-ancestors header (and frame-ancestors is ignored in <meta> CSP), so if
@@ -36,12 +37,23 @@ if (framed) {
   }, { once: true });
   document.head.appendChild(fonts);
 
-  // First-visit loading screen — only when the site opens on the home page.
-  if (isHomeRoute()) startBootLoader();
+  // First-visit loading screen — only when the site opens on the home page,
+  // and not on a reload while Motion was on (Motion comes back instead, with
+  // its own loading screen).
+  const resumeMotion = motionWasOn();
+  if (isHomeRoute() && !resumeMotion) startBootLoader();
 
-  ReactDOM.createRoot(document.getElementById('root')).render(
-    <React.StrictMode>
-      <App />
-    </React.StrictMode>,
-  );
+  // Mounting the whole site is the biggest single job at startup. As a
+  // transition, React renders it in small slices, so the loading screen keeps
+  // animating smoothly (on phones especially) instead of freezing for it.
+  const root = ReactDOM.createRoot(document.getElementById('root'));
+  startTransition(() => {
+    root.render(
+      <React.StrictMode>
+        <App />
+      </React.StrictMode>,
+    );
+  });
+
+  if (resumeMotion) setTimeout(() => swarmStore.setActive(true), 0);
 }

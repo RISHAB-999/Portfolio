@@ -9,6 +9,26 @@ const subscribers = new Set();
 
 const emit = () => subscribers.forEach((fn) => fn());
 
+// Motion survives a reload in the same tab (sessionStorage), so reloading while
+// it's on brings Motion back (with its own intro) instead of the first-visit
+// loading screen.
+const KEY = 'portfolio_motion_on';
+export function motionWasOn() {
+  try {
+    return sessionStorage.getItem(KEY) === '1';
+  } catch {
+    return false;
+  }
+}
+function remember(on) {
+  try {
+    if (on) sessionStorage.setItem(KEY, '1');
+    else sessionStorage.removeItem(KEY);
+  } catch {
+    /* storage unavailable: Motion just won't survive a reload */
+  }
+}
+
 function loadEngine() {
   if (!enginePromise) {
     enginePromise = import('./swarmEngine').catch((err) => {
@@ -24,6 +44,7 @@ async function setActive(next) {
   // not while the first-visit loading screen is still up (it has its own intro)
   if (next && document.documentElement.hasAttribute('data-boot')) return;
   active = next;
+  remember(next);
   emit();
   if (!next) {
     engine?.stop();
@@ -37,6 +58,7 @@ async function setActive(next) {
   } catch (err) {
     console.warn('Motion effect failed to load:', err);
     active = false;
+    remember(false);
     emit();
   }
 }

@@ -129,10 +129,18 @@ function part(g, x, y, w, h, radii, ring, fill) {
   g.restore();
 }
 
+// a 2D canvas that works on the page and inside a worker (the boot screen
+// draws there so it keeps animating while the page itself is busy loading)
+export function makeCanvas(w, h) {
+  if (typeof document === 'undefined') return new OffscreenCanvas(w, h);
+  const c = document.createElement('canvas');
+  c.width = w;
+  c.height = h;
+  return c;
+}
+
 export function createCoffeeArt() {
-  const canvas = document.createElement('canvas');
-  canvas.width = ART_W;
-  canvas.height = ART_H;
+  const canvas = makeCanvas(ART_W, ART_H);
   const g = canvas.getContext('2d', { willReadFrequently: true });
   const steamLeft = STEAM_LEFT.map(([d, dash]) => [new Path2D(d), dash]);
   const steamRight = STEAM_RIGHT.map(([d, dash]) => [new Path2D(d), dash]);
