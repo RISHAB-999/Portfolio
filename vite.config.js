@@ -50,9 +50,9 @@ export default defineConfig({
       webp: { quality: 70 },
     }),
   ],
-  // Served from https://RISHAB-999.github.io/Portfolio/.
-  // When you move to a custom domain (served at the root), change this single line to "/".
-  base: "/Portfolio/",
+  // Served at the root of the custom domain https://rishab-folio.runs-on.dev/.
+  // (Was "/Portfolio/" when it lived at RISHAB-999.github.io/Portfolio/.)
+  base: "/",
   build: {
     rollupOptions: {
       output: {
