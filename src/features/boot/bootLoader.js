@@ -55,7 +55,9 @@ export function startBootLoader() {
   // backdrop: black until the (small, pixel-art) gif is ready, then the scene
   const back = document.createElement('div');
   back.setAttribute('aria-hidden', 'true');
-  back.style.cssText = 'position:fixed;inset:0;z-index:2147483599;background:#000;';
+  // 100lvh rather than inset:0 so it always reaches the bottom on phones, even
+  // once the address bar hides (100vh first for older browsers)
+  back.style.cssText = 'position:fixed;left:0;right:0;top:0;height:100vh;height:100lvh;z-index:2147483599;background:#000;';
   const oil = new Image();
   oil.decoding = 'async';
   oil.alt = '';

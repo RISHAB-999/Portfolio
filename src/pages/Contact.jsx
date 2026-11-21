@@ -50,9 +50,17 @@ const ICONS = {
 // Sends at most once per minute from the same browser (enforced by the EmailJS SDK).
 const SEND_THROTTLE_MS = 60_000;
 
-const Modal = ({ onClose, content, variant }) => (
+const Modal = ({ onClose, content, variant }) => {
+  // lock the page behind and hide its scrollbar while the dialog is up (index.css)
+  useEffect(() => {
+    document.documentElement.classList.add('scroll-locked');
+    return () => document.documentElement.classList.remove('scroll-locked');
+  }, []);
+  return (
   <motion.div
-    className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 px-6"
+    // h-lvh, not inset-0: always reaches the bottom on phones, even after the
+    // address bar hides
+    className="fixed inset-x-0 top-0 h-lvh z-50 flex items-center justify-center bg-black/60 px-6"
     initial={{ opacity: 0 }}
     animate={{ opacity: 1 }}
     exit={{ opacity: 0 }}
@@ -87,7 +95,8 @@ const Modal = ({ onClose, content, variant }) => (
       </button>
     </motion.div>
   </motion.div>
-);
+  );
+};
 
 const Contact = () => {
   const form = useRef();

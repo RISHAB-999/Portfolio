@@ -258,6 +258,7 @@ export function createSwarm({ onRequestStop } = {}) {
     revealing.length = 0;
     cursors.length = 0;
     intro = null;
+    document.documentElement.removeAttribute('data-swarm-intro');
     phase = 'off';
     sleeping = false;
   }
@@ -999,7 +1000,10 @@ export function createSwarm({ onRequestStop } = {}) {
       intro.fadeAt = clock;
       buildFrom = clock + INTRO_FADE * 0.45; // the crew starts as the black clears
     }
-    if (intro.fadeAt >= 0 && clock - intro.fadeAt >= (profile.reduced ? 200 : INTRO_FADE)) intro = null;
+    if (intro.fadeAt >= 0 && clock - intro.fadeAt >= (profile.reduced ? 200 : INTRO_FADE)) {
+      intro = null;
+      document.documentElement.removeAttribute('data-swarm-intro');
+    }
   }
 
   const introBlocking = () => !!intro && intro.fadeAt < 0;
@@ -1420,6 +1424,8 @@ export function createSwarm({ onRequestStop } = {}) {
     rulerA = 0;
     scannedOnce = false;
     intro = { t0: 0, shown: 0, fadeAt: -1, spin: 0, stars: makeStars() };
+    // the page's scrollbar would otherwise show over the intro (index.css)
+    document.documentElement.setAttribute('data-swarm-intro', '');
     scene.loadLogo();
     route = location.hash;
     buildFrom = 1e9; // set when the loading screen starts to fade

@@ -10,6 +10,7 @@ import { pageConfig, DEFAULT_PAGE, location as siteLocation } from './data/siteC
 import cursor1 from './assets/cursor1_small.png';
 import cursor2 from './assets/cursor2_small.png';
 import cursor3 from './assets/cursor3_small.png';
+import { pauseOffscreenAnimations } from './utils/pauseOffscreenAnimations';
 
 // Route components are code-split so each page's JS loads only when visited.
 // Home stays eager since it's the landing route.
@@ -105,6 +106,9 @@ const AppContent = () => {
     window.addEventListener('mousemove', handleMove);
     return () => window.removeEventListener('mousemove', handleMove);
   }, []);
+
+  // Twinkling stars / blinking cursors / pulse dots pause while off screen.
+  useEffect(() => pauseOffscreenAnimations(document.getElementById('root') || document.body), []);
 
   // Handle text selection state to change cursor to cursor2
   useEffect(() => {
@@ -516,12 +520,22 @@ const AppContent = () => {
       const now = performance.now();
       if (now - lastPuff > 1400) { puff = 1.28; lastPuff = now; }
     };
+    // Viewport size, kept up to date on resize. Reading innerWidth/innerHeight
+    // inside the frame forced a style recalc every frame (other animations had
+    // already changed styles by then), which was most of this loop's cost.
+    let W = window.innerWidth;
+    let H = window.innerHeight;
+    const onResize = () => {
+      W = window.innerWidth;
+      H = window.innerHeight;
+    };
 
     window.addEventListener('pointerdown', onDown);
     window.addEventListener('pointermove', onMove);
     window.addEventListener('pointerup', onUp);
     window.addEventListener('pointercancel', onUp);
     window.addEventListener('scroll', onScroll, { passive: true });
+    window.addEventListener('resize', onResize);
 
     const frame = (now) => {
       // paused while the first-visit loading screen covers the page
@@ -531,8 +545,6 @@ const AppContent = () => {
       }
       if (start === undefined) start = now;
       const t = now - start;
-      const W = window.innerWidth;
-      const H = window.innerHeight;
 
       // Idle path: lazy horizontal sweep (~10.7s) + a slower vertical bob (~16s).
       const idleX = W / 2 + W * 0.3 * Math.sin(t / 1700);
@@ -570,6 +582,7 @@ const AppContent = () => {
       window.removeEventListener('pointerup', onUp);
       window.removeEventListener('pointercancel', onUp);
       window.removeEventListener('scroll', onScroll);
+      window.removeEventListener('resize', onResize);
     };
   }, [hasMouse]);
 
@@ -671,7 +684,7 @@ const AppContent = () => {
           }}
         >
           {/* Flickering star field behind the nav */}
-          <div aria-hidden="true" className="absolute inset-0 overflow-hidden" style={{ zIndex: 1 }} data-swarm-bg="deep">
+          <div aria-hidden="true" className="absolute inset-0 overflow-hidden" style={{ zIndex: 1 }} data-swarm-bg="deep" data-twinkle-field="">
             {headerStars.map((s, i) => (
               <span
                 key={i}

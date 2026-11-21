@@ -109,6 +109,8 @@ const Navbar = () => {
     document.body.classList.add('pause-menu-open');
     const prevOverflow = document.body.style.overflow;
     document.body.style.overflow = 'hidden';
+    // the real scroll lock + hides the page scrollbar over the menu (index.css)
+    document.documentElement.classList.add('scroll-locked');
 
     const onKey = (e) => {
       if (e.key === 'Escape') setToggle(false);
@@ -123,6 +125,7 @@ const Navbar = () => {
     return () => {
       document.body.classList.remove('pause-menu-open');
       document.body.style.overflow = prevOverflow;
+      document.documentElement.classList.remove('scroll-locked');
       window.removeEventListener('keydown', onKey);
       window.removeEventListener('resize', onResize);
     };
@@ -221,7 +224,10 @@ const Navbar = () => {
           <AnimatePresence>
             {toggle && (
               <motion.div
-                className="pause-menu fixed inset-0 z-[100] flex items-center justify-center overflow-y-auto p-4 backdrop-blur-md bg-black/40"
+                // h-lvh, not inset-0: on phones inset-0 can stop an address-bar
+                // height short of the bottom once the bar hides, letting the
+                // page (the ground strip) show below the menu
+                className="pause-menu fixed inset-x-0 top-0 h-lvh z-[100] flex items-center justify-center overflow-y-auto p-4 backdrop-blur-md bg-black/40"
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}

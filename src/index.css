@@ -467,6 +467,33 @@ html {
   }
 }
 
+/* Full-screen layers (pause menu, contact dialog, first-visit loader, the
+   Rebuild intro): the page's scrollbar is drawn by the browser above every
+   element, so it would show through them (the cyan bar on the right). While one
+   is up the scrollbar goes transparent but keeps its space (scrollbar-gutter),
+   so nothing shifts sideways when it comes back. scroll-locked also stops the
+   page behind from scrolling: body{overflow:hidden} alone doesn't, because
+   <html> has its own overflow set. */
+html.scroll-locked {
+  overflow: hidden;
+}
+html.scroll-locked,
+html[data-boot],
+html[data-swarm-intro] {
+  scrollbar-gutter: stable;
+  scrollbar-color: transparent transparent;
+}
+html.scroll-locked::-webkit-scrollbar-thumb,
+html.scroll-locked::-webkit-scrollbar-track,
+html[data-boot]::-webkit-scrollbar-thumb,
+html[data-boot]::-webkit-scrollbar-track,
+html[data-swarm-intro]::-webkit-scrollbar-thumb,
+html[data-swarm-intro]::-webkit-scrollbar-track {
+  background: transparent;
+  border-color: transparent;
+  box-shadow: none;
+}
+
 /* Hide scrollbar utility */
 .no-scrollbar::-webkit-scrollbar {
   display: none;
@@ -796,6 +823,11 @@ section[class*="hover:"] *:active, div[class*="hover:"] *:active, article[class*
 /* ── Typing cursor blink (replaces React useState timer) ─────────────── */
 .cursor-blink {
   animation: cursorBlink 1s step-end infinite;
+}
+/* Off-screen looping animations are paused (src/utils/pauseOffscreenAnimations.js) */
+.anim-offscreen,
+.anim-offscreen * {
+  animation-play-state: paused !important;
 }
 @keyframes cursorBlink {
   0%, 100% { opacity: 1; }
