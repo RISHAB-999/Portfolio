@@ -75,7 +75,22 @@ const AppContent = () => {
   // desktop (cursor-follow) and mobile (rAF drift) — so neither cursor moves nor
   // scrolling ever trigger a React re-render of the whole app.
   const kirbyRef = useRef(null);
+  const kirbyLayerRef = useRef(null);
   const [isMobile, setIsMobile] = useState(() => typeof window !== 'undefined' && window.innerWidth < 640);
+  // Kirby's behaviour follows the input device, not the window width: with a
+  // mouse he hangs under the cursor (at any window size, so a narrow or
+  // half-screen window doesn't park him in the middle); on touch he drifts.
+  const FINE_POINTER = '(hover: hover) and (pointer: fine)';
+  const [hasMouse, setHasMouse] = useState(
+    () => typeof window !== 'undefined' && window.matchMedia(FINE_POINTER).matches,
+  );
+  useEffect(() => {
+    const mq = window.matchMedia(FINE_POINTER);
+    const update = () => setHasMouse(mq.matches);
+    update();
+    mq.addEventListener('change', update);
+    return () => mq.removeEventListener('change', update);
+  }, []);
 
   // Mouse tracking — update HUD via DOM ref to avoid React re-renders on every mousemove
   const coordsRef = useRef(null);
@@ -161,34 +176,292 @@ const AppContent = () => {
     requestAnimationFrame(animateScroll);
   };
 
-  // Desktop: Kirby trails the cursor. Write straight to the DOM on mousemove /
-  // scroll instead of through state — no per-event re-render. `top` is a document
-  // coordinate (clientY + scrollY) so he stays under the cursor as the page scrolls.
-  // useLayoutEffect places him before first paint (no top-left flash).
+  // Desktop: Kirby hangs from his parasol under the cursor, with wind physics.
+  //   • follow — he springs toward the cursor with a little lag;
+  //   • sway   — he pivots from the parasol (top of the GIF) and is blown
+  //              against the motion: move right and he swings left, and
+  //              when the cursor stops he wobbles back to hanging straight;
+  //   • wind   — while moving, short wind streaks trail behind him.
+  // When nothing moves, the loop stops and the GIF just plays as normal.
+  // Everything is written straight to the DOM, with no React re-renders.
   useLayoutEffect(() => {
-    if (isMobile) return undefined;
+    if (!hasMouse) return undefined;
     const el = kirbyRef.current;
-    if (!el) return undefined;
+    const layer = kirbyLayerRef.current;
+    if (!el || !layer) return undefined;
 
-    let clientX = 0;
-    let clientY = 0;
-    const place = () => {
-      el.style.left = `${clientX + 9}px`;
-      el.style.top = `${clientY + 48}px`;
+    const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const clamp = (v, lo, hi) => Math.max(lo, Math.min(hi, v));
+    const OFFSET_X = 9;
+    const OFFSET_Y = 48;
+
+    const target = { x: OFFSET_X, y: OFFSET_Y };
+    const pos = { x: target.x, y: target.y };
+    let angle = 0; // degrees; positive = body swung to the left
+    let angVel = 0;
+    let windAmt = 0; // 0..1, how hard the wind is blowing (follows speed)
+    // The cursor's own (smoothed) velocity. The swing reacts to this rather than
+    // to Kirby's lagging position, so he swings back the instant you start.
+    let prevTX = target.x;
+    let prevTY = target.y;
+    let cvx = 0;
+    let cvy = 0;
+    let bobX = 0; // flutter offsets layered over the follow position
+    let bobY = 0;
+    let seen = false;
+    let raf = 0;
+    let last = 0;
+    let spawnAcc = 0;
+
+    // Wind gusts: a fixed pool of SVG lines, recycled. Each gust is born ahead of
+    // him (the wind he's flying into), sweeps back past him, and fades out
+    // behind. Some pass in front of him and some behind, for depth. Each one
+    // gets its own random length, gentle bend, curl, speed and fade.
+    const SVG_NS = 'http://www.w3.org/2000/svg';
+    const BOX_H = 24; // svg box height; the wave is centred in it
+    const rand = (lo, hi) => lo + Math.random() * (hi - lo);
+    const streaks = Array.from({ length: 14 }, () => {
+      const svg = document.createElementNS(SVG_NS, 'svg');
+      svg.setAttribute('data-swarm', 'skip');
+      svg.setAttribute('aria-hidden', 'true');
+      svg.setAttribute('height', String(BOX_H));
+      Object.assign(svg.style, {
+        position: 'absolute',
+        left: '0px',
+        top: '0px',
+        overflow: 'visible',
+        opacity: '0',
+        pointerEvents: 'none',
+        transformOrigin: '50% 50%',
+        filter: 'drop-shadow(0 0 3px rgba(92,225,230,0.65))',
+        willChange: 'transform, opacity',
+      });
+      const path = document.createElementNS(SVG_NS, 'path');
+      path.setAttribute('fill', 'none');
+      path.setAttribute('stroke', 'rgba(255,255,255,0.95)');
+      path.setAttribute('stroke-linecap', 'round');
+      path.setAttribute('stroke-linejoin', 'round');
+      svg.appendChild(path);
+      layer.appendChild(svg);
+      return {
+        node: svg, path, life: 0, decay: 0.04, x: 0, y: 0, dx: 0, dy: 0,
+        len: 0, rot: 0, amp: 0, wave: 0, phase: 0, phaseSpeed: 0, peak: 0.75,
+        curl: 0,
+      };
+    });
+    let nextStreak = 0;
+
+    // A long, calm line with one soft bend (not a wiggle). x runs from the
+    // tail (0) to the front (len). Some gusts end in a small curl at the tail,
+    // like a cartoon wind swoosh.
+    const wavePath = (st) => {
+      const steps = 12;
+      const mid = BOX_H / 2;
+      let d = '';
+      let tailY = mid;
+      for (let i = steps; i >= 0; i--) {
+        const t = i / steps;
+        const x = t * st.len;
+        const env = Math.sin(Math.PI * (0.15 + 0.85 * t)); // tail stays bent for the curl
+        const y = mid + st.amp * env * Math.sin((x / st.wave) * Math.PI * 2 + st.phase);
+        if (i === 0) tailY = y;
+        d += `${i === steps ? 'M' : 'L'}${x.toFixed(1)} ${y.toFixed(1)}`;
+      }
+      if (st.curl) {
+        const r = Math.abs(st.curl);
+        const s = Math.sign(st.curl); // curl up (-1) or down (+1)
+        const y0 = tailY;
+        d += `Q${(-r * 1.6).toFixed(1)} ${y0.toFixed(1)} ${(-r * 1.6).toFixed(1)} ${(y0 + s * r).toFixed(1)}`;
+        d += `Q${(-r * 1.6).toFixed(1)} ${(y0 + s * 2 * r).toFixed(1)} ${(-r * 0.5).toFixed(1)} ${(y0 + s * 2 * r).toFixed(1)}`;
+        d += `Q${(r * 0.5).toFixed(1)} ${(y0 + s * 2 * r).toFixed(1)} ${(r * 0.4).toFixed(1)} ${(y0 + s * r).toFixed(1)}`;
+      }
+      return d;
     };
-    el.style.transform = 'translate(-50%, -50%)';
-    place();
+
+    el.style.left = '0px';
+    el.style.top = '0px';
+    // He hangs like a pendulum from a point SWING_R above his centre (up by the
+    // cursor). Swinging moves his whole body around that point, so when the
+    // wind blows him back he really ends up behind the cursor, not just tilted.
+    const SWING_R = OFFSET_Y; // pivot sits right at the cursor
+    el.style.transformOrigin = '50% 50%';
+    const draw = () => {
+      const a = (angle * Math.PI) / 180;
+      const swingX = -Math.sin(a) * SWING_R; // positive angle = body to the left
+      const swingY = (Math.cos(a) - 1) * SWING_R; // and rises a little as it swings
+      el.style.transform =
+        `translate3d(${(pos.x + bobX + swingX).toFixed(1)}px, ${(pos.y + bobY + swingY).toFixed(1)}px, 0) translate(-50%, -50%) rotate(${angle.toFixed(2)}deg)`;
+    };
+    draw();
+
+    const frame = (now) => {
+      const f = last ? clamp((now - last) / 16.67, 0.25, 3) : 1;
+      last = now;
+
+      // The parasol is locked to the cursor (no smoothing, so no lag). Trailing
+      // behind comes only from his body swinging on the pendulum below.
+      pos.x = target.x;
+      pos.y = target.y;
+      // Cursor velocity this frame, lightly smoothed (mouse events and frames
+      // don't line up one-to-one) and capped so a jump into the window from
+      // far away doesn't fling him.
+      const prevCvx = cvx;
+      const ck = 1 - Math.pow(0.45, f);
+      cvx += (clamp((target.x - prevTX) / f, -40, 40) - cvx) * ck;
+      cvy += (clamp((target.y - prevTY) / f, -40, 40) - cvy) * ck;
+      prevTX = target.x;
+      prevTY = target.y;
+      const vx = cvx;
+      const vy = cvy;
+      const speed = Math.hypot(vx, vy);
+
+      if (!reduced) {
+        // Wind strength eases toward the cursor's speed, so it builds and dies down.
+        windAmt += (clamp(speed / 10, 0, 1) - windAmt) * (1 - Math.pow(0.8, f));
+
+        // Turbulence: a few out-of-step sine waves make the push uneven, so he
+        // never locks at one angle while flying. Stronger wind = more flutter.
+        const flutter = windAmt * (
+          Math.sin(now * 0.0105) * 7 +
+          Math.sin(now * 0.027 + 1.7) * 3.5 +
+          Math.sin(now * 0.0047 + 0.6) * 4
+        );
+
+        // Wind drag pushes him against the direction of travel; an
+        // underdamped spring lets him swing back and wobble when it stops.
+        const windAngle = clamp(vx * 3.2, -58, 58) + flutter;
+        angVel += ((windAngle - angle) * 0.14 - angVel * 0.2) * f;
+        // Pendulum kick: when the hanging point (the cursor) speeds up, he is
+        // flung the other way at once; when it stops, he swings forward.
+        angVel += (cvx - prevCvx) * 1.3;
+        // Now and then a random gust knocks him a little.
+        if (Math.random() < windAmt * 0.05 * f) angVel += rand(-2.4, 2.4);
+        angle = clamp(angle + angVel * f, -65, 65);
+
+        // The parasol catches air: he lifts a little and bobs up and down,
+        // drifting slightly side to side, while the wind blows.
+        bobY = windAmt * (-5 + Math.sin(now * 0.0085) * 4 + Math.sin(now * 0.019 + 0.4) * 1.5);
+        bobX = windAmt * Math.sin(now * 0.0063 + 2) * 3;
+
+        // Spawn gusts ahead of him at an irregular rate (more when faster),
+        // each placed and shaped at random so no two look alike.
+        if (speed > 2.5) {
+          spawnAcc += speed * rand(0.01, 0.05) * f;
+          while (spawnAcc >= 1) {
+            spawnAcc -= 1;
+            const st = streaks[nextStreak];
+            nextStreak = (nextStreak + 1) % streaks.length;
+            const ux = vx / speed;
+            const uy = vy / speed;
+            // Sum of two randoms clusters gusts near his middle, with strays.
+            const side = (Math.random() + Math.random() - 1) * 46;
+            const ahead = rand(45, 95);
+            st.life = 1;
+            st.peak = rand(0.45, 0.85);
+            st.len = clamp(speed * rand(1.5, 2.8), 14, 40);
+            st.amp = rand(1, 2.5);
+            st.wave = st.len * rand(0.9, 1.7); // about one soft bend per line
+            st.phase = rand(0, Math.PI * 2);
+            st.phaseSpeed = rand(0.02, 0.06) * (Math.random() < 0.5 ? -1 : 1);
+            st.curl = Math.random() < 0.35 ? rand(2.5, 4.5) * (Math.random() < 0.5 ? -1 : 1) : 0;
+            st.path.setAttribute('stroke-width', rand(1.1, 2).toFixed(2));
+            st.node.setAttribute('width', st.len.toFixed(0));
+            st.node.setAttribute('viewBox', `0 0 ${st.len.toFixed(0)} ${BOX_H}`);
+            // Half the gusts pass behind him, half in front.
+            if (Math.random() < 0.5) layer.insertBefore(st.node, el);
+            else layer.appendChild(st.node);
+            // Centre point of the gust, out in front of him along the motion.
+            st.x = pos.x + ux * (ahead + st.len / 2) - uy * side;
+            st.y = pos.y - 6 + uy * (ahead + st.len / 2) + ux * side;
+            // Blows back toward him and past him, faster than he flies.
+            const gust = rand(2.5, 5) + speed * 0.25;
+            st.dx = -ux * gust;
+            st.dy = -uy * gust;
+            // Life covers the trip: from ahead, past him, then a bit behind.
+            const trip = ahead + st.len * 1.5 + rand(30, 80);
+            st.decay = clamp((speed + gust) / trip, 0.012, 0.07);
+            st.rot = Math.atan2(uy, ux) + rand(-0.15, 0.15);
+          }
+        } else {
+          spawnAcc = 0;
+        }
+      }
+
+      let liveStreaks = false;
+      for (const st of streaks) {
+        if (st.life <= 0) continue;
+        st.life -= st.decay * f;
+        st.x += st.dx * f;
+        st.y += st.dy * f;
+        if (st.life <= 0) {
+          st.node.style.opacity = '0';
+          continue;
+        }
+        liveStreaks = true;
+        st.phase += st.phaseSpeed * f; // a slow sway, not a wriggle
+        st.path.setAttribute('d', wavePath(st));
+        // Fade in as it arrives, fade out once it's behind him.
+        const fade = Math.min(1, (1 - st.life) * 5, st.life * 2.5);
+        st.node.style.opacity = (fade * st.peak).toFixed(3);
+        st.node.style.transform =
+          `translate3d(${(st.x - st.len / 2).toFixed(1)}px, ${(st.y - BOX_H / 2).toFixed(1)}px, 0) rotate(${st.rot.toFixed(3)}rad)`;
+      }
+
+      draw();
+
+      const settled =
+        Math.abs(target.x - pos.x) < 0.3 &&
+        Math.abs(target.y - pos.y) < 0.3 &&
+        Math.abs(angle) < 0.05 &&
+        Math.abs(angVel) < 0.05 &&
+        windAmt < 0.01 &&
+        Math.abs(cvx) < 0.05 &&
+        Math.abs(cvy) < 0.05 &&
+        !liveStreaks;
+      if (settled) {
+        pos.x = target.x;
+        pos.y = target.y;
+        angle = 0;
+        angVel = 0;
+        windAmt = 0;
+        cvx = 0;
+        cvy = 0;
+        bobX = 0;
+        bobY = 0;
+        draw();
+        raf = 0;
+        last = 0;
+        return;
+      }
+      raf = requestAnimationFrame(frame);
+    };
 
     const onMove = (e) => {
-      clientX = e.clientX;
-      clientY = e.clientY;
-      place();
+      target.x = e.clientX + OFFSET_X;
+      target.y = e.clientY + OFFSET_Y;
+      if (!seen) {
+        // First sighting of the cursor: appear under it, don't fly in from the corner.
+        seen = true;
+        pos.x = target.x;
+        pos.y = target.y;
+        prevTX = target.x;
+        prevTY = target.y;
+      }
+      // Move him with the cursor right away, in the same event, instead of
+      // waiting for the next animation frame.
+      pos.x = target.x;
+      pos.y = target.y;
+      draw();
+      if (!raf) raf = requestAnimationFrame(frame);
     };
     window.addEventListener('mousemove', onMove);
     return () => {
       window.removeEventListener('mousemove', onMove);
+      cancelAnimationFrame(raf);
+      streaks.forEach((st) => st.node.remove());
+      el.style.transformOrigin = '';
     };
-  }, [isMobile]);
+  }, [hasMouse]);
 
   // Treat narrow viewports as "mobile" (matches the site's 768px breakpoint).
   // To test on a laptop, shrink the window under 768px or use DevTools device mode.
@@ -206,10 +479,10 @@ const AppContent = () => {
   //   • scroll      — each scroll burst gives an occasional "puff up" pulse;
   //   • tap/drag    — pointer down/move pulls him toward the touch point, then he
   //                   eases back into idle drift ~1s after the last touch.
-  // Pointer events cover both touch and mouse, so a click on a narrow laptop
-  // window attracts him too — handy for testing without a touchscreen.
+  // Runs on touch devices (no hovering mouse). To test it on a laptop, use
+  // DevTools device mode, which emulates a touch screen.
   useLayoutEffect(() => {
-    if (!isMobile) return undefined;
+    if (hasMouse) return undefined;
     const el = kirbyRef.current;
     if (!el) return undefined;
 
@@ -298,7 +571,7 @@ const AppContent = () => {
       window.removeEventListener('pointercancel', onUp);
       window.removeEventListener('scroll', onScroll);
     };
-  }, [isMobile]);
+  }, [hasMouse]);
 
 
 
@@ -322,6 +595,7 @@ const AppContent = () => {
 
       {/* Floating GIF — fixed so it stays visible on all pages including Resume */}
       <div
+        ref={kirbyLayerRef}
         style={{
           position: 'fixed',
           inset: 0,
