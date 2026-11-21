@@ -109,8 +109,9 @@ const Navbar = () => {
     document.body.classList.add('pause-menu-open');
     const prevOverflow = document.body.style.overflow;
     document.body.style.overflow = 'hidden';
-    // the real scroll lock + hides the page scrollbar over the menu (index.css)
-    document.documentElement.classList.add('scroll-locked');
+    // hides the page scrollbar over the menu (index.css); the page behind can
+    // still be scrolled, as before
+    document.documentElement.classList.add('overlay-open');
 
     const onKey = (e) => {
       if (e.key === 'Escape') setToggle(false);
@@ -125,7 +126,7 @@ const Navbar = () => {
     return () => {
       document.body.classList.remove('pause-menu-open');
       document.body.style.overflow = prevOverflow;
-      document.documentElement.classList.remove('scroll-locked');
+      document.documentElement.classList.remove('overlay-open');
       window.removeEventListener('keydown', onKey);
       window.removeEventListener('resize', onResize);
     };
@@ -181,21 +182,26 @@ const Navbar = () => {
 
         {/* Desktop Navigation Links */}
         <ul className="list-none sm:flex text-xs hidden items-center gap-8 sm:gap-12 z-10">
-          {navLinks.map((nav, n) => (
-            <motion.li
-              key={nav.id}
-              style={{ '--n': n + 1 }}
-              variants={linkVariants}
-              whileHover="hover"
-              whileTap="tap"
-              className="boot-nav-item font-source-code-pro font-semibold cursor-pointer text-base sm:text-lg text-white hover:text-[#5ce1e6] transition-colors"
-              onClick={() => handleNavigation(nav.id)}
-            >
-              <span className="text-white hover:text-[#5ce1e6] transition-colors drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]">
-                {nav.title}
-              </span>
-            </motion.li>
-          ))}
+          {navLinks.map((nav, n) => {
+            const active = nav.id === currentId;
+            return (
+              <motion.li
+                key={nav.id}
+                style={{ '--n': n + 1 }}
+                variants={linkVariants}
+                whileHover="hover"
+                whileTap="tap"
+                aria-current={active ? 'page' : undefined}
+                className="boot-nav-item font-source-code-pro font-semibold cursor-pointer text-base sm:text-lg text-white hover:text-[#5ce1e6] transition-colors"
+                onClick={() => handleNavigation(nav.id)}
+              >
+                {/* the page you're on glows cyan */}
+                <span className={active ? 'nav-link-active transition-colors' : 'text-white hover:text-[#5ce1e6] transition-colors drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]'}>
+                  {nav.title}
+                </span>
+              </motion.li>
+            );
+          })}
         </ul>
 
         {/* Mobile Hamburger button */}
@@ -227,7 +233,10 @@ const Navbar = () => {
                 // h-lvh, not inset-0: on phones inset-0 can stop an address-bar
                 // height short of the bottom once the bar hides, letting the
                 // page (the ground strip) show below the menu
-                className="pause-menu fixed inset-x-0 top-0 h-lvh z-[100] flex items-center justify-center overflow-y-auto p-4 backdrop-blur-md bg-black/40"
+                // no overflow-y-auto here (index.css adds it only on very short
+                // screens): a scrollable fixed overlay would swallow swipes, so
+                // the page behind couldn't be scrolled while the menu is open
+                className="pause-menu fixed inset-x-0 top-0 h-lvh z-[100] flex items-center justify-center p-4 backdrop-blur-md bg-black/40"
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}

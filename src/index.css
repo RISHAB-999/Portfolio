@@ -471,13 +471,15 @@ html {
    Rebuild intro): the page's scrollbar is drawn by the browser above every
    element, so it would show through them (the cyan bar on the right). While one
    is up the scrollbar goes transparent but keeps its space (scrollbar-gutter),
-   so nothing shifts sideways when it comes back. scroll-locked also stops the
-   page behind from scrolling: body{overflow:hidden} alone doesn't, because
-   <html> has its own overflow set. */
+   so nothing shifts sideways when it comes back. overlay-open (pause menu) only
+   hides the scrollbar — the page behind still scrolls; scroll-locked (contact
+   dialog) also stops the page behind from scrolling: body{overflow:hidden}
+   alone doesn't, because <html> has its own overflow set. */
 html.scroll-locked {
   overflow: hidden;
 }
 html.scroll-locked,
+html.overlay-open,
 html[data-boot],
 html[data-swarm-intro] {
   scrollbar-gutter: stable;
@@ -485,6 +487,8 @@ html[data-swarm-intro] {
 }
 html.scroll-locked::-webkit-scrollbar-thumb,
 html.scroll-locked::-webkit-scrollbar-track,
+html.overlay-open::-webkit-scrollbar-thumb,
+html.overlay-open::-webkit-scrollbar-track,
 html[data-boot]::-webkit-scrollbar-thumb,
 html[data-boot]::-webkit-scrollbar-track,
 html[data-swarm-intro]::-webkit-scrollbar-thumb,
@@ -565,6 +569,13 @@ Pixel boxes
   -webkit-backdrop-filter: blur(3px);
   backdrop-filter: blur(3px);
   padding: 24px;
+}
+/* Only scroll the menu itself when it can't fit (e.g. a phone held sideways);
+   otherwise swipes pass through and scroll the page behind it. */
+@media (max-height: 560px) {
+  .pause-menu {
+    overflow-y: auto;
+  }
 }
 /* Safety: the overlay is portaled to <body>, so width-gate it in CSS too —
    it must never appear at desktop widths regardless of toggle state. */
@@ -824,6 +835,12 @@ section[class*="hover:"] *:active, div[class*="hover:"] *:active, article[class*
 .cursor-blink {
   animation: cursorBlink 1s step-end infinite;
 }
+/* Header: the link for the page you're on glows */
+.nav-link-active {
+  color: #5ce1e6;
+  text-shadow: 0 0 6px rgba(92, 225, 230, 0.85), 0 0 16px rgba(92, 225, 230, 0.55), 0 2px 4px rgba(0, 0, 0, 0.8);
+}
+
 /* Off-screen looping animations are paused (src/utils/pauseOffscreenAnimations.js) */
 .anim-offscreen,
 .anim-offscreen * {

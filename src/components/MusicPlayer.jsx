@@ -219,7 +219,10 @@ const MusicPlayer = ({ embedded = false }) => {
               onMouseLeave={resetHover}
               onPointerEnter={premountCard}
               onFocus={premountCard}
-              aria-hidden={showCard || undefined}
+              // inert (not aria-hidden) while the card is open: hides the capsule
+              // from assistive tech AND moves focus out of it, so the clicked
+              // button isn't left focused inside a hidden element
+              inert={showCard ? '' : undefined}
               style={{ scale, rotateX, rotateY, transformOrigin: cardOrigin, '--svg-glass-url': 'url(#music-player-glass)', visibility: showCard ? 'hidden' : undefined, opacity: showCard ? 0 : 1 }}
               className={`relative flex items-center gap-1.5 h-10 use-svg-glass liquid-glass overflow-hidden pointer-events-auto ${showCard ? 'music-loops-paused ' : ''}${
                 isPlaying

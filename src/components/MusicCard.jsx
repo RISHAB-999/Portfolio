@@ -94,7 +94,9 @@ const MusicCard = ({
           : { opacity: 0, scale: 0.95, transitionEnd: { visibility: 'hidden' } }
       }
       transition={{ duration: 0.12, ease: 'easeOut' }}
-      aria-hidden={!open || undefined}
+      // inert (not aria-hidden): also takes focus out of the closed card, so a
+      // focused button is never left inside a hidden element (browser warning)
+      inert={open ? undefined : ''}
       style={{ transformOrigin: isMobileNav ? 'bottom center' : 'top left', '--svg-glass-url': 'url(#music-card-glass)' }}
       className={`relative w-[min(92vw,310px)] ${
         isMobileNav ? 'p-2.5 text-xs' : 'p-3.5 sm:p-4'
