@@ -1,6 +1,6 @@
 # 🕹️ Rishab Negi – Interactive Pixel-Art Portfolio
 
-[![Live Demo](https://img.shields.io/badge/Live%20Demo-Visit%20Site-5ce1e6?style=for-the-badge&logo=github&logoColor=black)](https://RISHAB-999.github.io/Portfolio/)
+[![Live Demo](https://img.shields.io/badge/Live%20Demo-Visit%20Site-5ce1e6?style=for-the-badge&logo=github&logoColor=black)](https://rishab-folio.runs-on.dev/)
 
 Welcome to my personal developer portfolio website! Built with a retro 8-bit / 16-bit pixel-art aesthetic, this interactive web application showcases my projects, work experience, technical skills, and background.
 
