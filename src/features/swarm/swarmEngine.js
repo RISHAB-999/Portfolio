@@ -34,9 +34,9 @@ const INK = '#3d8bff'; // design-tool selection blue (selections, badges, guides
 const COLORS = ['#ff5a8a', '#ffc24b', '#5ce1e6', '#7cf29c', '#b18cff', '#ff9f5a', '#6ea8ff', '#ff7ad9', '#4de0c0', '#f5f06b', '#ff8f8f', '#9be7ff'];
 const FONT = '600 10px ui-monospace, "Source Code Pro", monospace';
 const TAU = Math.PI * 2;
-// The arrow sprite's tip is at (0,0) and it points up-and-left; this is the
-// angle of that direction, used to turn the arrow to face where it's flying.
-const ARROW_HEADING = Math.atan2(-1, -0.45);
+// The crew pointer's tip is at (0,0) and it points diagonally up-and-left;
+// this is the angle of that direction, used to turn it to face where it's flying.
+const ARROW_HEADING = Math.atan2(-1, -1);
 
 // Flock tuning (px, px/s, px/s²)
 const FLOCK = {
@@ -55,7 +55,9 @@ const easeInOut = (t) => (t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) 
 const rand = (a, b) => a + Math.random() * (b - a);
 
 let arrowPath = null;
-const getArrow = () => arrowPath || (arrowPath = new Path2D('M0 0 L0 15 L4 11.4 L6.6 17.4 L9 16.3 L6.5 10.5 L11.6 10.5 Z'));
+// The crew's pointer: a multiplayer-style arrowhead (tip, two wings, a notch),
+// the same shape as the Rebuild button's icon. The user's own cursor is untouched.
+const getArrow = () => arrowPath || (arrowPath = new Path2D('M0 0 L15 6 L8.2 8.2 L6 15 Z'));
 
 const roundRect = (ctx, x, y, w, h, r) => {
   ctx.beginPath();
@@ -304,7 +306,7 @@ export function createSwarm({ onRequestStop } = {}) {
     revealing.length = 0;
     units = result.units;
     fixedUnits = units.filter((u) => u.fixed);
-    let left = 0;
+    groupTwins(units);    let left = 0;
     for (let i = 0; i < units.length; i++) {
       if (stage.isShown(units[i].el)) {
         units[i].state = 3;
@@ -318,6 +320,99 @@ export function createSwarm({ onRequestStop } = {}) {
     scanPending = !!rescanTimer;
     lastDocHeight = document.documentElement.scrollHeight;
     wake();
+  }
+
+  // ─── twin cards (copy & drag) ──────────────────────────────────────────────
+  // Cards that share a class (a grid of project cards, a row of skill tiles) are
+  // twins. Once one is built, the next is made the way a designer would: grab
+  // the built card, drag out an empty copy of its shell (no content) to the new
+  // spot while the original stays put, then fill the content in as usual.
+  const MIN_CARD_AREA = 2500; // smaller boxes (chips, dots) are just drawn
+  function groupTwins(list) {
+    const groups = new Map();
+    for (let i = 0; i < list.length; i++) {
+      const u = list[i];
+      u.order = i; // the scan is in reading order: top to bottom, left to right
+      u.twins = null;
+      if (u.kind !== 'box' || u.w * u.h < MIN_CARD_AREA) continue;
+      const cls = (u.el.getAttribute('class') || '').trim();
+      if (!cls) continue;
+      const key = `${u.el.tagName}|${u.fixed ? 'f' : 'd'}|${cls}`;
+      let g = groups.get(key);
+      if (!g) groups.set(key, (g = []));
+      g.push(u);
+    }
+    groups.forEach((g) => {
+      if (g.length < 2) return;
+      for (let i = 0; i < g.length; i++) g[i].twins = g;
+    });
+  }
+  const similarSize = (a, b) => {
+    const rw = a.w / b.w;
+    const rh = a.h / b.h;
+    return rw > 0.5 && rw < 2 && rh > 0.5 && rh < 2;
+  };
+  // Is a cursor already copying from this card? One copy at a time per card, so
+  // the copies cascade (1 → 2, then 1 → 3 and 2 → 4 together) instead of a pile
+  // of cursors all grabbing the same spot.
+  function sourceBusy(s) {
+    for (let i = 0; i < cursors.length; i++) {
+      const t = cursors[i].task;
+      if (t && t.copy && t.copy.src === s) return true;
+    }
+    return false;
+  }
+  // A free built twin on screen to copy from, or null. Copies flow left to
+  // right: the card to the left (or above) is preferred over one to the right.
+  function copySource(u) {
+    if (!u.twins) return null;
+    let best = null;
+    let bestD = Infinity;
+    for (let i = 0; i < u.twins.length; i++) {
+      const s = u.twins[i];
+      if (s === u || s.state !== 3 || !s.el.isConnected || !inView(s, -4) || !similarSize(s, u) || sourceBusy(s)) continue;
+      const d = Math.abs(s.x - u.x) + Math.abs(s.y - u.y) + (s.x > u.x + 4 ? 600 : 0);
+      if (d < bestD) {
+        bestD = d;
+        best = s;
+      }
+    }
+    return best;
+  }
+  // A twin on screen that is being made, or is built but lending itself to
+  // another copy right now: worth waiting for, so this card gets copied
+  // instead of drawn from scratch.
+  function twinInProgress(u) {
+    if (!u.twins) return false;
+    for (let i = 0; i < u.twins.length; i++) {
+      const s = u.twins[i];
+      if (s === u || !inView(s, -4) || !similarSize(s, u)) continue;
+      if (s.state === 1 || s.state === 2 || (s.state === 3 && sourceBusy(s))) return true;
+    }
+    return false;
+  }
+  // An earlier twin (to the left / above) whose drawing or copying hasn't
+  // visibly begun yet (waiting, or its cursor still on the way): wait for it,
+  // so the first card drawn is the leftmost and the copies go left to right.
+  function earlierTwinWaiting(u) {
+    if (!u.twins) return false;
+    for (let i = 0; i < u.twins.length; i++) {
+      const s = u.twins[i];
+      if (s !== u && s.state < 2 && s.order < u.order && inView(s, -4) && similarSize(s, u)) return true;
+    }
+    return false;
+  }
+  // Should this twin card hold back for now?
+  const holdTwin = (u) => !!u.twins && (earlierTwinWaiting(u) || (!copySource(u) && twinInProgress(u)));
+  // The card's own look, for the dragged copy (background, border, corners).
+  function shellLook(el, w, h) {
+    const s = getComputedStyle(el);
+    const bw = parseFloat(s.borderTopWidth) || 0;
+    return {
+      bg: s.backgroundColor,
+      border: bw > 0 ? s.borderTopColor : null,
+      radius: Math.min(parseFloat(s.borderTopLeftRadius) || 0, w / 2, h / 2),
+    };
   }
 
   function completeUnit(u) {
@@ -427,6 +522,8 @@ export function createSwarm({ onRequestStop } = {}) {
       // where nobody would build it
       const p = u.parent;
       if (p && !(p.state === 3 || (p.state === 2 && p.kind !== 'text')) && inView(p, -4)) continue;
+      // a twin card is being made: wait, then copy it rather than redraw it
+      if (holdTwin(u)) continue;
       backlog++;
       if (ready.length < want) ready.push(u);
     }
@@ -437,6 +534,13 @@ export function createSwarm({ onRequestStop } = {}) {
     for (let i = 0; i < cursors.length && ready.length; i++) {
       const c = cursors[i];
       if (c.task) continue;
+      // a twin card handed out earlier in this same pass: let it be built
+      // first, so this one gets copied from it instead of drawn in parallel
+      for (let j = ready.length - 1; j >= 0; j--) {
+        const r = ready[j];
+        if (holdTwin(r)) ready.splice(j, 1);
+      }
+      if (!ready.length) break;
       let best = 0;
       let bestD = Infinity;
       const n = Math.min(3, ready.length);
@@ -451,6 +555,16 @@ export function createSwarm({ onRequestStop } = {}) {
       const u = ready.splice(best, 1)[0];
       u.state = 1;
       c.task = { unit: u, step: 'go', k: 0, dur: clamp(220 + bestD * 0.5, 240, 850) / speed, ax: c.x, ay: c.y, bend: Math.random() < 0.5 ? -1 : 1, speed };
+      const src = copySource(u);
+      if (src) {
+        // grab the built twin a little way in from its top-left corner
+        c.task.copy = {
+          src,
+          gx: Math.min(36, src.w * 0.3) * rand(0.7, 1.4),
+          gy: Math.min(28, src.h * 0.3) * rand(0.7, 1.4),
+          look: shellLook(src.el, src.w, src.h),
+        };
+      }
       c.shape = 'arrow';
     }
   }
@@ -507,6 +621,24 @@ export function createSwarm({ onRequestStop } = {}) {
   }
   const P0 = { x: 0, y: 0 };
   const P1 = { x: 0, y: 0 };
+  const GHOST = { x: 0, y: 0, w: 0, h: 0 };
+
+  // Where the cursor grabs the built twin (viewport space).
+  function copyGrab(cp, out) {
+    out.x = clamp(ux(cp.src) + cp.gx, 4, vw - 12);
+    out.y = clamp(uy(cp.src) + cp.gy, 4, vh - 12);
+    return out;
+  }
+  // The dragged copy's rectangle at progress k: from the original to the target.
+  function copyRect(t, u, k, out) {
+    const s = t.copy.src;
+    const e = easeInOut(k);
+    out.x = ux(s) + (ux(u) - ux(s)) * e;
+    out.y = uy(s) + (uy(u) - uy(s)) * e;
+    out.w = s.w + (u.w - s.w) * e;
+    out.h = s.h + (u.h - s.h) * e;
+    return out;
+  }
 
   // clip-path that shows the text typed so far: whole lines, then part of one.
   function typingClip(u, width) {
@@ -533,7 +665,8 @@ export function createSwarm({ onRequestStop } = {}) {
     const k = t.k < 1 ? t.k : 1;
 
     if (t.step === 'go') {
-      startPoint(u, P0);
+      if (t.copy) copyGrab(t.copy, P0);
+      else startPoint(u, P0);
       const dx = P0.x - t.ax;
       const dy = P0.y - t.ay;
       const len = Math.hypot(dx, dy) || 1;
@@ -542,6 +675,18 @@ export function createSwarm({ onRequestStop } = {}) {
       const bend = t.bend * Math.sin(Math.PI * k) * Math.min(len * 0.18, 60);
       c.x = t.ax + dx * e + (-dy / len) * bend;
       c.y = t.ay + dy * e + (dx / len) * bend;
+      if (k >= 1 && t.copy) {
+        // grabbed the built twin: now drag a copy of its shell to this card's spot
+        u.state = 2;
+        c.press = 1;
+        t.k = 0;
+        t.step = 'copy';
+        c.shape = 'copy';
+        const s = t.copy.src;
+        const dist = Math.hypot(ux(u) - ux(s), uy(u) - uy(s));
+        t.dur = clamp(340 + dist * 0.55, 420, 1150) / t.speed;
+        return;
+      }
       if (k >= 1) {
         u.state = 2;
         c.press = 1;
@@ -552,6 +697,21 @@ export function createSwarm({ onRequestStop } = {}) {
         const h = Math.min(u.h, vh);
         t.dur = (u.kind === 'text' ? clamp(140 + Math.sqrt(w * h) * 0.5, 160, 420) : clamp(260 + Math.sqrt(w * h), 320, 1000)) / t.speed;
       }
+      return;
+    }
+
+    if (t.step === 'copy') {
+      // the copy travels (and resizes, if the twins differ a little) from the
+      // original to its own place; the cursor holds it where it grabbed it
+      const r = copyRect(t, u, k, GHOST);
+      const cp = t.copy;
+      c.x = r.x + cp.gx * (r.w / cp.src.w);
+      c.y = r.y + cp.gy * (r.h / cp.src.h);
+      if (k < 1) return;
+      c.press = 1;
+      completeUnit(u); // dropped: the real (empty) card is there now
+      c.task = null;
+      c.shape = 'arrow';
       return;
     }
 
@@ -958,14 +1118,65 @@ export function createSwarm({ onRequestStop } = {}) {
     ctx.fillText(text, x + 5, by + 10.5);
   }
 
+  // A card being duplicated: the original stays selected (dashed), and an empty
+  // copy of its shell, in the card's own colours, rides the cursor to its spot.
+  function drawCopy(t, u) {
+    const s = t.copy.src;
+    const look = t.copy.look;
+    const sx = ux(s);
+    const sy = uy(s);
+    ctx.strokeStyle = INK;
+    ctx.setLineDash([4, 3]);
+    ctx.strokeRect(sx + 0.5, sy + 0.5, s.w - 1, s.h - 1);
+    ctx.setLineDash([]);
+
+    const k = t.k < 1 ? t.k : 1;
+    const r = copyRect(t, u, k, GHOST);
+    if (quality.guides) {
+      ctx.strokeStyle = 'rgba(61,139,255,0.28)';
+      ctx.beginPath();
+      ctx.moveTo(0, r.y + 0.5);
+      ctx.lineTo(vw, r.y + 0.5);
+      ctx.moveTo(r.x + 0.5, 0);
+      ctx.lineTo(r.x + 0.5, vh);
+      ctx.stroke();
+    }
+    // the shell: the card's own background and border, slightly see-through
+    ctx.globalAlpha = 0.9;
+    roundRect(ctx, r.x, r.y, r.w, r.h, look.radius);
+    ctx.fillStyle = look.bg && look.bg !== 'rgba(0, 0, 0, 0)' ? look.bg : 'rgba(61,139,255,0.10)';
+    ctx.fill();
+    if (look.border) {
+      ctx.strokeStyle = look.border;
+      ctx.stroke();
+    }
+    ctx.globalAlpha = 1;
+    // selection outline + handles, like any object being dragged in a design tool
+    ctx.strokeStyle = INK;
+    ctx.strokeRect(r.x + 0.5, r.y + 0.5, r.w, r.h);
+    ctx.fillStyle = '#fff';
+    for (let q = 0; q < 4; q++) {
+      const hx = q & 1 ? r.x + r.w : r.x;
+      const hy = q & 2 ? r.y + r.h : r.y;
+      ctx.fillRect(hx - 3, hy - 3, 6, 6);
+      ctx.strokeRect(hx - 2.5, hy - 2.5, 6, 6);
+    }
+    badge(`${Math.round(r.w)} × ${Math.round(r.h)}`, r.x + r.w / 2, r.y + r.h + 7);
+  }
+
   function drawWork() {
     ctx.lineWidth = 1;
     let dragging = false;
     for (let i = 0; i < cursors.length; i++) {
       const c = cursors[i];
       const t = c.task;
-      if (!t || (t.step !== 'drag' && t.step !== 'type')) continue;
+      if (!t || (t.step !== 'drag' && t.step !== 'type' && t.step !== 'copy')) continue;
       const u = t.unit;
+      if (t.step === 'copy') {
+        drawCopy(t, u);
+        dragging = true;
+        continue;
+      }
       startPoint(u, P0);
       const x0 = P0.x;
       const y0 = P0.y;
@@ -1060,8 +1271,26 @@ export function createSwarm({ onRequestStop } = {}) {
         ctx.fillStyle = c.color;
         ctx.fill(arrow);
         ctx.strokeStyle = 'rgba(255,255,255,0.95)';
-        ctx.lineWidth = 1.1;
+        ctx.lineWidth = 1.3;
+        ctx.lineJoin = 'round';
         ctx.stroke(arrow);
+        ctx.lineJoin = 'miter';
+        if (c.shape === 'copy') {
+          // duplicate cursor: a small "+" tag in the pointer's notch corner
+          ctx.rotate(-c.angle);
+          ctx.beginPath();
+          ctx.arc(15, 15, 5, 0, TAU);
+          ctx.fillStyle = c.color;
+          ctx.fill();
+          ctx.strokeStyle = 'rgba(255,255,255,0.95)';
+          ctx.stroke();
+          ctx.beginPath();
+          ctx.moveTo(12.5, 15); ctx.lineTo(17.5, 15);
+          ctx.moveTo(15, 12.5); ctx.lineTo(15, 17.5);
+          ctx.strokeStyle = '#fff';
+          ctx.lineWidth = 1.4;
+          ctx.stroke();
+        }
       }
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     }

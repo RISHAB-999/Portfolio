@@ -68,7 +68,10 @@ export function startBootLoader() {
   const makeLayer = (z) => {
     const c = document.createElement('canvas');
     c.setAttribute('aria-hidden', 'true');
-    c.style.cssText = `position:fixed;inset:0;width:100vw;height:100vh;z-index:${z};pointer-events:none;touch-action:none;`;
+    // Sized in px to the visible viewport (see fitLayers), not 100vw/100vh: on
+    // mobile 100vh is the height with the address bar hidden, which stretched
+    // the drawing down until the loading line sat on top of the LOADING label.
+    c.style.cssText = `position:fixed;left:0;top:0;width:${window.innerWidth}px;height:${window.innerHeight}px;z-index:${z};pointer-events:none;touch-action:none;`;
     document.body.appendChild(c);
     return c;
   };
@@ -169,7 +172,15 @@ export function startBootLoader() {
   }
 
   // ── page → renderer ────────────────────────────────────────────────────────
+  // keep both canvases exactly the size the renderer draws for
+  const fitLayers = () => {
+    for (const c of [linesCanvas, canvas]) {
+      c.style.width = `${window.innerWidth}px`;
+      c.style.height = `${window.innerHeight}px`;
+    }
+  };
   const onResize = () => {
+    fitLayers();
     send({ type: 'resize', ...size() });
     placeLabel();
   };
