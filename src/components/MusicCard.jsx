@@ -88,12 +88,15 @@ const MusicCard = ({
     <motion.div
       ref={cardRef}
       initial={false}
+      // Opens with a soft glide out of the capsule (grows, fades in, drifts into
+      // place, easing off at the end); closes a little quicker. Only opacity and
+      // transform animate, so it stays cheap on every device.
       animate={
         open
-          ? { opacity: 1, scale: 1, visibility: 'visible' }
-          : { opacity: 0, scale: 0.95, transitionEnd: { visibility: 'hidden' } }
+          ? { opacity: 1, scale: 1, y: 0, visibility: 'visible' }
+          : { opacity: 0, scale: 0.9, y: isMobileNav ? 10 : -8, transitionEnd: { visibility: 'hidden' } }
       }
-      transition={{ duration: 0.12, ease: 'easeOut' }}
+      transition={open ? { duration: 0.34, ease: [0.22, 1, 0.36, 1] } : { duration: 0.16, ease: [0.4, 0, 1, 1] }}
       // inert (not aria-hidden): also takes focus out of the closed card, so a
       // focused button is never left inside a hidden element (browser warning)
       inert={open ? undefined : ''}
@@ -172,8 +175,8 @@ const MusicCard = ({
         {showPlaylist && (
           <motion.div
             initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: 'auto' }}
-            exit={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: 'auto', transition: { duration: 0.3, ease: [0.22, 1, 0.36, 1] } }}
+            exit={{ opacity: 0, height: 0, transition: { duration: 0.22, ease: [0.4, 0, 0.2, 1] } }}
             className="flex flex-col gap-1 max-h-32 overflow-y-auto mb-2 pr-1 bg-black/40 p-1.5 rounded-2xl border border-[#5ce1e6]/30 no-scrollbar"
           >
             <span className="text-[9px] font-bold text-[#5ce1e6] uppercase tracking-wider mb-0.5 px-1">
@@ -271,7 +274,7 @@ const MusicCard = ({
                 initial={{ opacity: 0, width: 0 }}
                 animate={{ opacity: 1, width: 'auto' }}
                 exit={{ opacity: 0, width: 0 }}
-                transition={{ type: 'spring', stiffness: 400, damping: 30 }}
+                transition={{ type: 'spring', stiffness: 260, damping: 28 }}
                 className="flex items-center gap-1 overflow-hidden py-3 -my-3"
               >
                 <input

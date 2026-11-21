@@ -207,7 +207,7 @@ const MusicPlayer = ({ embedded = false }) => {
               // only re-measure when the capsule's size can actually change (play/pause);
               // otherwise every re-render (e.g. opening the card) forces a layout read
               layoutDependency={isPlaying}
-              transition={{ layout: { type: 'spring', stiffness: 400, damping: 35 } }}
+              transition={{ layout: { type: 'spring', stiffness: 320, damping: 32 } }}
               onMouseMove={handleMouseMove}
               onMouseEnter={() => {
                 cachedBoundsRef.current = null;
@@ -223,7 +223,9 @@ const MusicPlayer = ({ embedded = false }) => {
               // from assistive tech AND moves focus out of it, so the clicked
               // button isn't left focused inside a hidden element
               inert={showCard ? '' : undefined}
-              style={{ scale, rotateX, rotateY, transformOrigin: cardOrigin, '--svg-glass-url': 'url(#music-player-glass)', visibility: showCard ? 'hidden' : undefined, opacity: showCard ? 0 : 1 }}
+              // fades out as the card grows from it (and back in as it closes)
+              // instead of vanishing in one frame
+              style={{ scale, rotateX, rotateY, transformOrigin: cardOrigin, '--svg-glass-url': 'url(#music-player-glass)', visibility: showCard ? 'hidden' : undefined, opacity: showCard ? 0 : 1, transition: 'opacity 0.22s ease, visibility 0.22s' }}
               className={`relative flex items-center gap-1.5 h-10 use-svg-glass liquid-glass overflow-hidden pointer-events-auto ${showCard ? 'music-loops-paused ' : ''}${
                 isPlaying
                   ? 'pl-2.5 pr-3.5 !rounded-full'
@@ -265,14 +267,14 @@ const MusicPlayer = ({ embedded = false }) => {
                   initial={{ opacity: 0, scaleY: 0 }}
                   animate={{ opacity: 1, scaleY: 1 }}
                   exit={{ opacity: 0, scaleY: 0 }}
-                  transition={{ duration: 0.2 }}
+                  transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
                   className="relative z-20 w-px h-4 bg-gradient-to-b from-transparent via-[#5ce1e6] to-transparent rounded-full shrink-0 shadow-[0_0_8px_#5ce1e6]"
                 />
                 <motion.div
                   initial={{ opacity: 0, scale: 0.8, x: -10 }}
                   animate={{ opacity: 1, scale: 1, x: 0 }}
                   exit={{ opacity: 0, scale: 1, x: 0 }}
-                  transition={{ duration: 0.25, ease: 'easeOut' }}
+                  transition={{ duration: 0.34, ease: [0.22, 1, 0.36, 1] }}
                   onClick={openCard}
                   title="Click to open Music Controls"
                   role="button"
